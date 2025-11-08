@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "created_at": "20251108_235438",
+    "role": "Student"
+  },
+  "personal": {
+    "firstname": "hatev",
+    "lastname": "fandoe",
+    "dob": "2025-11-08",
+    "email": "hatev15120@fandoe.com",
+    "phone": "",
+    "linkedin": "https://www.linkedin.com/in/hatev-fandoe-485076396/?skipRedirect=true",
+    "instagram": "",
+    "facebook": ""
+  },
+  "free_text": "",
+  "cv_path": "data/uploads\\cv_20251108_235438_schroedinger_II.pdf",
+  "student_entries": []
+}

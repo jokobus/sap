@@ -108,7 +108,7 @@ def get_employee_profiles(company_name, use_mock=True, max_results=10, keywords=
     return employee_data
 
 
-def live_get_employee_profiles(company_name, max_results=10, headless=True, email=None, password=None, cookie_file=None, debug=False, keywords=None, title=None, location=None):
+def live_get_employee_profiles(company_name, max_results=10, headless=True, email=None, password=None, cookie_file=None, debug=False, keywords=None, title=None, location=None, keep_open=False):
     """
     Attempt live scraping using Selenium.
 
@@ -124,8 +124,10 @@ def live_get_employee_profiles(company_name, max_results=10, headless=True, emai
     # Credentials
     email = email or os.environ.get('LINKEDIN_EMAIL')
     password = password or os.environ.get('LINKEDIN_PASSWORD')
-    if not email or not password:
-        raise RuntimeError('LinkedIn credentials required for live scraping. Set LINKEDIN_EMAIL and LINKEDIN_PASSWORD env vars.')
+    # Allow an interactive manual login flow when running headful with --keep-open
+    interactive_login_allowed = keep_open and not headless
+    if not (email and password) and not cookie_file and not interactive_login_allowed:
+        raise RuntimeError('LinkedIn credentials required for live scraping. Set LINKEDIN_EMAIL and LINKEDIN_PASSWORD env vars, provide a cookie file, or run with --no-headless --keep-open to sign in manually.')
 
     options = webdriver.ChromeOptions()
     if headless:
@@ -139,25 +141,173 @@ def live_get_employee_profiles(company_name, max_results=10, headless=True, emai
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
 
-    try:
-        wait = WebDriverWait(driver, 15)
-        # Login
-        if debug:
-            print('[debug] Opening LinkedIn login page')
-        driver.get('https://www.linkedin.com/login')
+    # Directory where this script lives (it's already inside linkedinscraper/)
+    script_dir = os.path.dirname(__file__) or os.getcwd()
+    os.makedirs(script_dir, exist_ok=True)
+
+    def _save_debug_artifacts(name):
+        """Save screenshot and HTML to the linkedinscraper folder with a timestamped name."""
+        ts = int(time.time())
+        png_path = os.path.join(script_dir, f"debug_{name}_{ts}.png")
+        html_path = os.path.join(script_dir, f"debug_{name}_{ts}.html")
         try:
-            wait.until(EC.presence_of_element_located((By.ID, 'username')))
+            driver.save_screenshot(png_path)
+        except Exception:
+            pass
+        try:
+            open(html_path, 'w', encoding='utf-8').write(driver.page_source)
+        except Exception:
+            pass
+        if debug:
+            print(f"[debug] Saved {png_path} and {html_path}")
+
+    def _detect_protection():
+        """Detect common LinkedIn anti-bot feedback in the current page source.
+
+        Returns a tuple (detected: bool, reason: str)
+        """
+        try:
+            src = (driver.page_source or '').lower()
+        except Exception:
+            return (False, '')
+
+        phrases = [
+            "you don't have access to this profile",
+            'grow your network first',
+            'recaptcha',
+            'g-recaptcha',
+            'are you a robot',
+            'access to this profile',
+            'complete the captcha',
+        ]
+        for p in phrases:
+            if p in src:
+                return (True, p)
+        return (False, '')
+
+    def save_cookies_to_file(driver, path):
+        try:
+            cookies = driver.get_cookies()
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(cookies, f)
+            if debug:
+                print(f"[debug] Saved {len(cookies)} cookies to {path}")
         except Exception as e:
             if debug:
-                print(f'[debug] username field not found: {e}')
+                print(f"[debug] Failed to save cookies: {e}")
+
+    def load_cookies_from_file(driver, path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                cookies = json.load(f)
+        except Exception as e:
+            if debug:
+                print(f"[debug] Failed to read cookies from {path}: {e}")
+            return False
+
+        # Navigate to base domain so cookies can be set
+        driver.get('https://www.linkedin.com/')
+        added = 0
+        for c in cookies:
+            cookie = {k: v for k, v in c.items() if k in ('name', 'value', 'path', 'domain', 'expiry', 'secure', 'httpOnly')}
+            try:
+                driver.add_cookie(cookie)
+                added += 1
+            except Exception:
+                # try without domain
+                cookie2 = cookie.copy()
+                cookie2.pop('domain', None)
                 try:
-                    open('debug_after_login_page.html','w',encoding='utf-8').write(driver.page_source)
+                    driver.add_cookie(cookie2)
+                    added += 1
                 except Exception:
-                    pass
-            raise
-        driver.find_element(By.ID, 'username').send_keys(email)
-        driver.find_element(By.ID, 'password').send_keys(password)
-        driver.find_element(By.CSS_SELECTOR, 'button[type=submit]').click()
+                    if debug:
+                        print(f"[debug] Could not add cookie {cookie.get('name')}")
+        if debug:
+            print(f"[debug] Added {added} cookies from {path}")
+        driver.refresh()
+        return True
+
+    try:
+        wait = WebDriverWait(driver, 15)
+        # Try loading cookies (if provided) before logging in
+        if cookie_file:
+            if os.path.exists(cookie_file):
+                if debug:
+                    print(f"[debug] Loading cookies from {cookie_file}")
+                load_cookies_from_file(driver, cookie_file)
+            else:
+                if debug:
+                    print(f"[debug] Cookie file {cookie_file} not found, continuing to login flow")
+
+        # If cookies were loaded, check if we're already logged in
+        logged_in = False
+        try:
+            # short wait
+            WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[placeholder*="Search"]')))
+            logged_in = True
+            if debug:
+                print('[debug] Session restored from cookies, logged in')
+        except Exception:
+            logged_in = False
+
+        # If not logged in, perform credential login
+        if not logged_in:
+            if debug:
+                print('[debug] Opening LinkedIn login page')
+            # If credentials are available, use them; otherwise allow manual interactive login
+            driver.get('https://www.linkedin.com/login')
+            if email and password:
+                try:
+                    wait.until(EC.presence_of_element_located((By.ID, 'username')))
+                except Exception as e:
+                    if debug:
+                        print(f'[debug] username field not found: {e}')
+                        try:
+                            _save_debug_artifacts('after_login_page')
+                        except Exception:
+                            pass
+                    raise
+                driver.find_element(By.ID, 'username').send_keys(email)
+                driver.find_element(By.ID, 'password').send_keys(password)
+                driver.find_element(By.CSS_SELECTOR, 'button[type=submit]').click()
+
+                # Wait for homepage to load (profile nav or search box)
+                try:
+                    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[placeholder*="Search"]')))
+                    logged_in = True
+                except Exception as e:
+                    if debug:
+                        print(f'[debug] Search input not found after login: {e}')
+                        try:
+                            _save_debug_artifacts('login')
+                        except Exception:
+                            pass
+                    raise
+            else:
+                # No credentials provided; if interactive login is allowed, pause and let the user sign in manually
+                if debug:
+                    print('[debug] No credentials provided; entering manual interactive login mode')
+                try:
+                    print('[info] Please sign in interactively in the opened browser window. When finished, return here and press Enter to continue...')
+                    input('Press Enter after you have completed the interactive login in the browser...')
+                    # After the user signals, try to detect login by waiting for the search input
+                    try:
+                        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[placeholder*="Search"]')), timeout=30)
+                        logged_in = True
+                    except Exception:
+                        # don't raise here; we'll continue and detection may occur later
+                        logged_in = False
+                except Exception:
+                    logged_in = False
+
+        # If logged in and save path provided via cookie_file, persist cookies
+        if logged_in and cookie_file:
+            try:
+                save_cookies_to_file(driver, cookie_file)
+            except Exception:
+                if debug:
+                    print(f'[debug] Failed to save cookies to {cookie_file}')
 
         # Wait for homepage to load (profile nav or search box)
         try:
@@ -187,6 +337,29 @@ def live_get_employee_profiles(company_name, max_results=10, headless=True, emai
         search_url = f"https://www.linkedin.com/search/results/people/?keywords={requests.utils.requote_uri(search_query)}"
         driver.get(search_url)
 
+        # Detect common protection pages (e.g., access-message or captcha)
+        try:
+            prot, reason = _detect_protection()
+            if prot:
+                message = ('LinkedIn protection detected ("' + reason + '"). ' \
+                           'This usually means LinkedIn blocked automated access: try running with --no-headless --keep-open, solve any captcha/2FA manually, then use --save-cookies to persist the session.')
+                print(f'[warning] {message}')
+                if debug:
+                    try:
+                        _save_debug_artifacts('protection')
+                    except Exception:
+                        pass
+                # If user requested keep_open and we have a visible browser, pause so they can act
+                if keep_open and not headless:
+                    try:
+                        input('Press Enter after you have resolved the protection (close any popups) to continue...')
+                    except Exception:
+                        pass
+                # Stop further automated scraping for this session
+                return []
+        except Exception:
+            pass
+
         # Wait for results (try a few strategies)
         try:
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div.search-results-container, ul.reusable-search__entity-results-list, div.reusable-search__entity-result-list')))
@@ -203,13 +376,11 @@ def live_get_employee_profiles(company_name, max_results=10, headless=True, emai
                 time.sleep(2)
             except Exception as e:
                 if debug:
-                    print(f'[debug] manual search failed: {e}')
-                    try:
-                        driver.save_screenshot('debug_search.png')
-                        open('debug_search.html','w',encoding='utf-8').write(driver.page_source)
-                        print('[debug] Saved debug_search.png and debug_search.html')
-                    except Exception:
-                        pass
+                            print(f'[debug] manual search failed: {e}')
+                            try:
+                                _save_debug_artifacts('search')
+                            except Exception:
+                                pass
                 # continue; containers finding below will handle empty case
 
         # Scroll a few times to load results
@@ -221,6 +392,25 @@ def live_get_employee_profiles(company_name, max_results=10, headless=True, emai
             if new_height == last_height:
                 break
             last_height = new_height
+
+        # Re-check for protection after page load/scroll (captchas sometimes appear after navigation)
+        try:
+            prot, reason = _detect_protection()
+            if prot:
+                print(f'[warning] LinkedIn protection detected after page load ("{reason}").')
+                if debug:
+                    try:
+                        _save_debug_artifacts('protection_after_scroll')
+                    except Exception:
+                        pass
+                if keep_open and not headless:
+                    try:
+                        input('Press Enter after you have resolved the protection (close any popups) to continue...')
+                    except Exception:
+                        pass
+                return []
+        except Exception:
+            pass
 
         # Collect result containers (try multiple selectors for robustness)
         containers = driver.find_elements(By.CSS_SELECTOR, 'li.reusable-search__result-container, div.search-result__info, div.entity-result__item, div.entity-result')
@@ -272,9 +462,7 @@ def live_get_employee_profiles(company_name, max_results=10, headless=True, emai
 
         if debug and len(results) == 0:
             try:
-                driver.save_screenshot('debug_no_results.png')
-                open('debug_no_results.html','w',encoding='utf-8').write(driver.page_source)
-                print('[debug] No results: saved debug_no_results.png and debug_no_results.html')
+                _save_debug_artifacts('no_results')
             except Exception:
                 pass
 
@@ -283,12 +471,20 @@ def live_get_employee_profiles(company_name, max_results=10, headless=True, emai
 
         return results
     finally:
+        # If keep_open is True, wait for user input before quitting so manual interaction is possible.
+        try:
+            if keep_open and not headless:
+                print('[info] --keep-open set: browser will remain open until you press Enter')
+                input('Press Enter to close the browser and continue...')
+        except Exception:
+            pass
+
         driver.quit()
 
 
-def get_employee_profiles_live(company_name, max_results=10, headless=True, debug=False, email=None, password=None, cookie_file=None, keywords=None, title=None, location=None):
+def get_employee_profiles_live(company_name, max_results=10, headless=True, debug=False, email=None, password=None, cookie_file=None, keywords=None, title=None, location=None, keep_open=False):
     try:
-        return live_get_employee_profiles(company_name, max_results=max_results, headless=headless, debug=debug, email=email, password=password, cookie_file=cookie_file, keywords=keywords, title=title, location=location)
+        return live_get_employee_profiles(company_name, max_results=max_results, headless=headless, debug=debug, email=email, password=password, cookie_file=cookie_file, keywords=keywords, title=title, location=location, keep_open=keep_open)
     except Exception as e:
         print(f'Live scraping failed: {e}')
         return None
@@ -303,12 +499,15 @@ def main(argv=None):
     parser.add_argument('--email', type=str, help='LinkedIn email (overrides LINKEDIN_EMAIL env var)')
     parser.add_argument('--password', type=str, help='LinkedIn password (overrides LINKEDIN_PASSWORD env var)')
     parser.add_argument('--no-headless', action='store_true', help='Run browser in visible mode (not headless)')
-    parser.add_argument('--cookie-file', type=str, help='Optional path to a cookie file to reuse an authenticated session')
+    parser.add_argument('--cookie-file', type=str, help='Optional path to a cookie file to load and save session cookies')
+    parser.add_argument('--save-cookies', type=str, help='Path to save cookies after login (optional)')
     parser.add_argument('--keywords', type=str, help='Additional keywords to include in the LinkedIn people search (e.g. "data scientist")')
     parser.add_argument('--title', type=str, help='Job title to filter by (e.g. "Senior Engineer")')
     parser.add_argument('--location', type=str, help='Location to filter by (e.g. "Munich")')
+    parser.add_argument('--load-cookies', type=str, help='Path to a cookie file to load before login')
     parser.add_argument('--workers', type=int, default=1, help='Number of parallel browser instances to run (default 1)')
     parser.add_argument('--max', type=int, default=10, help='Maximum sample results to return')
+    parser.add_argument('--keep-open', '--pause-after-login', action='store_true', help='Keep the browser open after login until you press Enter (useful for manual captcha/2FA solve)')
     args = parser.parse_args(argv)
 
     if args.live:
@@ -328,10 +527,11 @@ def main(argv=None):
                         debug=args.debug,
                         email=args.email,
                         password=args.password,
-                        cookie_file=args.cookie_file,
+                        cookie_file=args.cookie_file or args.load_cookies,
                         keywords=args.keywords,
                         title=args.title,
                         location=args.location,
+                        keep_open=args.keep_open,
                     ))
                     # small stagger to avoid simultaneous spikes
                     time.sleep(0.5)
@@ -353,10 +553,11 @@ def main(argv=None):
                 debug=args.debug,
                 email=args.email,
                 password=args.password,
-                cookie_file=args.cookie_file,
+                cookie_file=args.load_cookies or args.cookie_file,
                 keywords=args.keywords,
                 title=args.title,
                 location=args.location,
+                keep_open=args.keep_open,
             )
     else:
         results = get_employee_profiles(args.company, use_mock=args.mock, max_results=args.max, keywords=args.keywords, title=args.title, location=args.location)
