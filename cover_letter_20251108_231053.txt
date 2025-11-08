@@ -1,0 +1,24 @@
+[Your Name]
+[Your Address] | [Your Phone Number] | [Your Email] | [Your LinkedIn Profile URL (Optional)]
+
+[Date]
+
+Hiring Manager
+3DEXCITE
+[Company Address, if known, otherwise omit]
+Munich, Germany
+
+**Subject: Application for Working Student (m/f/d) – AI Developer**
+
+Dear Hiring Manager,
+
+I am writing to express my enthusiastic interest in the Working Student (m/f/d) – AI Developer position at 3DEXCITE in Munich, as advertised. As a Master of Science student in Informatics at the Technical University of Munich with a Bachelor's in Computer Science from Jacobs University Bremen, my academic journey and practical experiences have equipped me with a robust foundation in artificial intelligence and software development. I am particularly drawn to 3DEXCITE's mission of integrating AI into tools and applications for Design Validation, Ergonomic studies, and Perceived Quality, and I am eager to contribute my skills to your innovative team.
+
+My academic background provides a strong base for this role, including comprehensive knowledge of C++ and Python – both essential programming languages highlighted in your requirements. Through various projects and coursework, I have gained hands-on experience with AI tools, particularly in the areas of Convolutional Neural Networks (CNNs), Natural Language Processing (NLP), and finetuning models, which are directly applicable to evaluating and optimizing AI algorithms. While I may not have explicit experience with Stable Diffusion, my proficiency in general AI tools and concepts like TensorBoard demonstrates my capability to quickly adapt and leverage new technologies. Furthermore, my studies have provided me with a fundamental understanding of image processing techniques, crucial for producing high-end visualization content.
+
+In my previous roles as a Working Student Data Scientist at CHECK24 and a Junior Software Engineer - NLP at P&M Agentur, I gained practical experience in producing, testing, and training data for AI models, as well as optimizing their performance. These experiences align directly with the responsibilities of this position, including generating test and training data and evaluating AI algorithms. I am adept at collaborating with technical teams, utilizing tools like Git for version control, and contributing effectively within R&D environments. I am confident that my blend of academic knowledge and practical application makes me a strong candidate for this opportunity.
+
+I am keen to apply my passion for AI development within a dynamic and forward-thinking organization like 3DEXCITE. The prospect of contributing to tools that enhance design validation and user experiences, while further developing my skills alongside highly qualified experts, is incredibly appealing. Thank you for considering my application. I have attached my resume for your review and welcome the opportunity to discuss how my qualifications and enthusiasm can benefit your team.
+
+Sincerely,
+Shishir Sunar
