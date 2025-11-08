@@ -1,0 +1,50 @@
+# Python cache and build
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment & config
+.env
+.env.*
+.venv/
+venv/
+env/
+*.sqlite3
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs & temp files
+*.log
+*.tmp
+*.bak
+*.DS_Store
+
+# Unit tests
+tests/
+.coverage
+.pytest_cache/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Dependencies
+Pipfile.lock
+poetry.lock
+
+# Local data / outputs
+output/
+data/
+*.csv
+*.pdf
+work_log.md
