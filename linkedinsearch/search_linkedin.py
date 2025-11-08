@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+"""Search for LinkedIn people profiles via SerpAPI (preferred) or DuckDuckGo fallback.
+
+Saves results to a JSON file with entries containing: rank, name (if available), url, snippet, engine
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+from typing import List, Dict, Optional
+
+import requests
+from bs4 import BeautifulSoup
+
+SERPAPI_KEY_ENV = "SERPAPI_API_KEY"
+
+
+def build_query(keywords: List[str], company: Optional[str] = None) -> str:
+    # base: look only at person profile pages
+    base = "(site:linkedin.com/in OR site:linkedin.com/pub)"
+    parts = [base]
+    if keywords:
+        # include each keyword phrase (if multi-word, keep as-is)
+        parts.extend([f'"{k}"' if " " in k else k for k in keywords])
+    if company:
+        parts.append(f'"{company}"')
+
+    exclusions = [
+        "-site:linkedin.com/company",
+        "-site:linkedin.com/jobs",
+        "-inurl:/pulse/",
+        "-inurl:/posts/",
+        "-inurl:/feed/",
+        "-inurl:/jobs/",
+        "-inurl:/company/",
+        "-inurl:/school/",
+        "-inurl:/groups/",
+    ]
+    parts.extend(exclusions)
+    return " ".join(parts)
+
+
+def serpapi_search(query: str, num: int = 10, api_key: Optional[str] = None) -> List[Dict]:
+    """Use SerpAPI Google engine to get organic results.
+
+    Requires `serpapi` package and SERPAPI_API_KEY set.
+    """
+    try:
+        from serpapi import GoogleSearch
+    except Exception as e:
+        raise RuntimeError("serpapi package not installed or import failed") from e
+
+    params = {
+        "engine": "google",
+        "q": query,
+        "google_domain": "google.com",
+        "gl": "us",
+        "hl": "en",
+        "num": num,
+        "start": 0,
+        "api_key": api_key,
+    }
+
+    search = GoogleSearch(params)
+    res = search.get_dict()
+    results = []
+    for i, item in enumerate(res.get("organic_results", [])[:num], start=1):
+        link = item.get("link") or item.get("url")
+        title = item.get("title") or item.get("position")
+        snippet = item.get("snippet") or item.get("rich_snippet", {}).get("top", {}).get("detected_extensions", "")
+        results.append({"rank": i, "name": title, "url": link, "snippet": snippet, "engine": "serpapi"})
+    return results
+
+
+def ddg_html_search(query: str, num: int = 10, dump_html: Optional[str] = None, debug: bool = False) -> List[Dict]:
+    """Fallback: use DuckDuckGo HTML interface and parse results.
+
+    Not as reliable as SerpAPI, but works without API key.
+    """
+    url = "https://html.duckduckgo.com/html/"
+    resp = requests.post(url, data={"q": query})
+    resp.raise_for_status()
+    if dump_html:
+        try:
+            with open(dump_html, "w", encoding="utf-8") as fh:
+                fh.write(resp.text)
+        except Exception:
+            pass
+    soup = BeautifulSoup(resp.text, "html.parser")
+    links = []
+    # DuckDuckGo HTML results commonly have anchors with class 'result__a'
+    a_tags = soup.find_all("a", href=True)
+    if debug:
+        print(f"[debug] total <a> tags found: {len(a_tags)}")
+        sample = [a.get('href') for a in a_tags[:50]]
+        print("[debug] sample hrefs:")
+        for s in sample:
+            print("  ", s)
+    seen = set()
+    rank = 0
+    for a in a_tags:
+        href = a["href"]
+        # canonicalize duckduckgo redirect links if any (uddg param contains encoded target URL)
+        m = re.search(r"uddg=([^&]+)", href)
+        if m:
+            import urllib.parse
+
+            try:
+                href = urllib.parse.unquote(m.group(1))
+            except Exception:
+                # fallback to original href if unquote fails
+                pass
+
+        # Now filter LinkedIn person profile patterns on the canonical/decoded href
+        if not re.search(r"linkedin\.com/(in|pub)/", href, re.I):
+            # also accept some common LinkedIn vanity/profile patterns (best-effort)
+            if not re.search(r"linkedin\.com/[a-zA-Z0-9-]+/?$", href, re.I):
+                continue
+
+        if href in seen:
+            continue
+        seen.add(href)
+        rank += 1
+        title = a.get_text(strip=True)
+        snippet = ""
+        # try to capture snippet nearby
+        parent = a.find_parent()
+        if parent:
+            p = parent.find_next_sibling("a") or parent.find_next_sibling("div")
+            if p:
+                snippet = p.get_text(strip=True)[:300]
+        links.append({"rank": rank, "name": title, "url": href, "snippet": snippet, "engine": "duckduckgo"})
+        if rank >= num:
+            break
+    return links
+
+
+def save_results(results: List[Dict], path: str) -> None:
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
+
+
+def save_csv(results: List[Dict], path: str) -> None:
+    import csv
+
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["rank", "name", "url", "snippet", "engine"])
+        for r in results:
+            writer.writerow([r.get("rank"), r.get("name"), r.get("url"), r.get("snippet"), r.get("engine")])
+
+
+def dedupe_results(results: List[Dict]) -> List[Dict]:
+    seen = set()
+    out = []
+    for r in results:
+        u = r.get("url") or ""
+        # normalize: remove query params and trailing slashes
+        u_norm = re.sub(r"\?.*$", "", u).rstrip("/")
+        if u_norm in seen:
+            continue
+        seen.add(u_norm)
+        out.append(r)
+    return out
+
+
+def parse_args(argv: Optional[List[str]] = None):
+    p = argparse.ArgumentParser(description="Search LinkedIn profiles using search engines and save top results to JSON.")
+    p.add_argument("--keywords", "-k", nargs="+", required=True, help="Keywords or phrase(s) to search for. If a phrase has spaces, wrap it in quotes.")
+    p.add_argument("--company", "-c", help="Optional company name to include in the query.")
+    p.add_argument("--num", "-n", type=int, default=10, help="Number of profiles to fetch (default 10).")
+    p.add_argument("--output", "-o", default="linkedinsearch/results.json", help="Output JSON file path.")
+    p.add_argument("--use-serpapi", action="store_true", help="Force using SerpAPI (requires SERPAPI_API_KEY). By default will use SerpAPI if key is present.)")
+    p.add_argument("--csv", help="Optional CSV output path (will be created alongside JSON if provided).")
+    p.add_argument("--dedupe", action="store_true", help="Remove duplicate profile URLs (basic normalization).")
+    p.add_argument("--debug", action="store_true", help="Print debug info such as sample hrefs from DuckDuckGo HTML.")
+    p.add_argument("--dump-html", help="If provided, save DuckDuckGo HTML to this file for inspection.")
+    p.add_argument("--post-filter", action="store_true", help="Require that keywords appear in title/snippet (may reduce results but increase relevance).")
+    return p.parse_args(argv)
+
+
+def main(argv: Optional[List[str]] = None):
+    args = parse_args(argv)
+    query = build_query(args.keywords, args.company)
+    print(f"Built query: {query}")
+
+    results = []
+    serp_key = os.environ.get(SERPAPI_KEY_ENV)
+    # prefer serpapi if key provided or forced
+    if args.use_serpapi or serp_key:
+        key = serp_key
+        if not key:
+            print("SERPAPI_API_KEY not set; cannot use SerpAPI. Falling back to DuckDuckGo.")
+        else:
+            try:
+                print("Using SerpAPI to query Google for best relevance...")
+                results = serpapi_search(query, num=args.num, api_key=key)
+            except Exception as e:
+                print(f"SerpAPI search failed: {e}. Falling back to DuckDuckGo.")
+
+    if not results:
+        print("Using DuckDuckGo fallback (no API key). Results may be less consistent.")
+        results = ddg_html_search(query, num=args.num, dump_html=args.dump_html, debug=args.debug)
+
+    # Simple post-filter: ensure urls are linkedin person profiles
+    filtered = []
+    for r in results:
+        u = r.get("url") or ""
+        if re.search(r"linkedin\.com/(in|pub)/", u, re.I):
+            filtered.append(r)
+
+    # optional post-filter: require keywords appear in title or snippet
+    if args.post_filter and filtered:
+        kw_lower = [k.lower() for k in args.keywords]
+        kept = []
+        for r in filtered:
+            text = ((r.get("name") or "") + " " + (r.get("snippet") or "")).lower()
+            if any(k in text for k in kw_lower):
+                kept.append(r)
+        filtered = kept
+
+    if args.dedupe:
+        filtered = dedupe_results(filtered)
+
+    # save CSV if requested
+    if args.csv:
+        try:
+            save_csv(filtered, args.csv)
+            print(f"Saved CSV to {args.csv}")
+        except Exception as e:
+            print(f"Failed to save CSV: {e}")
+
+    save_results(filtered, args.output)
+    print(f"Saved {len(filtered)} results to {args.output}")
+
+
+if __name__ == "__main__":
+    main()
