@@ -3,272 +3,148 @@ import json
 import os
 from datetime import datetime
 
-# --- Helpers -----------------------------------------------------------------
+def initialize_session_state():
+    """Initializes the session state variables."""
+    if 'step' not in st.session_state:
+        st.session_state.step = 0
+    if 'user_data' not in st.session_state:
+        st.session_state.user_data = {}
+    if 'education_entries' not in st.session_state:
+        st.session_state.education_entries = [{'title': '', 'university': '', 'start_time': '', 'end_time': '', 'location': '', 'description': ''}]
+    if 'experience_entries' not in st.session_state:
+        st.session_state.experience_entries = [{'title': '', 'company': '', 'start_time': '', 'end_time': '', 'location': '', 'description': ''}]
 
-def ensure_dirs():
-    os.makedirs("data/outputs", exist_ok=True)
-    os.makedirs("data/uploads", exist_ok=True)
+def save_data():
+    """Saves the user data to a JSON file."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Get the directory of the current script
+    script_dir = os.path.dirname(__file__)
+    filename = os.path.join(script_dir, "..", "data", "outputs", f"intake_{timestamp}.json")
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, 'w') as f:
+        json.dump(st.session_state.user_data, f, indent=4)
+    st.success(f"Data saved successfully to {filename}")
 
+def collect_dynamic_entries(entry_type, entries_key, title_label, name_label):
+    """Collects multiple entries for education or experience."""
+    st.subheader(f"Please add your {title_label.lower()}.")
+    
+    if entries_key not in st.session_state:
+        st.session_state[entries_key] = [{'title': '', 'name': '', 'start_time': '', 'end_time': '', 'location': '', 'description': ''}]
 
-def timestamp():
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+    entries = st.session_state[entries_key]
 
+    for i, entry in enumerate(entries):
+        st.markdown(f"---")
+        entry['title'] = st.text_input(f"{title_label} Title", value=entry.get('title', ''), key=f"{entries_key}_title_{i}")
+        entry['name'] = st.text_input(name_label, value=entry.get('name', ''), key=f"{entries_key}_name_{i}")
+        entry['start_time'] = st.text_input("Start Date (e.g., YYYY-MM)", value=entry.get('start_time', ''), key=f"{entries_key}_start_{i}")
+        entry['end_time'] = st.text_input("End Date (e.g., YYYY-MM or 'Present')", value=entry.get('end_time', ''), key=f"{entries_key}_end_{i}")
+        entry['location'] = st.text_input("Location", value=entry.get('location', ''), key=f"{entries_key}_location_{i}")
+        entry['description'] = st.text_area("Description", value=entry.get('description', ''), key=f"{entries_key}_desc_{i}", height=100)
 
-def save_json(data, prefix="submission"):
-    fname = f"{prefix}_{timestamp()}.json"
-    path = os.path.join("data/outputs", fname)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    return path
-
-
-def save_uploaded_file(uploaded_file):
-    if uploaded_file is None:
-        return None
-    save_name = f"cv_{timestamp()}_{uploaded_file.name}"
-    path = os.path.join("data/uploads", save_name)
-    with open(path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
-    return path
-
-
-# Render a chat message (simple styling)
-def chat_message(text, who="bot"):
-    if who == "bot":
-        st.markdown(f"<div style='background:#f1f3f5;padding:12px;border-radius:10px;margin:6px 0'><b>Bot</b><div style='margin-top:6px'>{text}</div></div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div style='background:#e7f5ff;padding:12px;border-radius:10px;margin:6px 0;text-align:right'><b>You</b><div style='margin-top:6px'>{text}</div></div>", unsafe_allow_html=True)
-
-
-# Position / Degree block renderer
-def render_position_block(prefix, idx, values=None):
-    # unique keys using prefix+idx
-    st.text_input("Position / Degree title", key=f"{prefix}_title_{idx}", value=(values.get("title") if values else ""))
-    st.text_input("Institution / Company name", key=f"{prefix}_org_{idx}", value=(values.get("org") if values else ""))
-    st.date_input("Start date (can skip)", key=f"{prefix}_start_{idx}", value=(values.get("start") if values and values.get("start") else None))
-    st.date_input("End date (can skip)", key=f"{prefix}_end_{idx}", value=(values.get("end") if values and values.get("end") else None))
-    st.text_input("Location", key=f"{prefix}_loc_{idx}", value=(values.get("location") if values else ""))
-    st.text_area("Description", key=f"{prefix}_desc_{idx}", value=(values.get("description") if values else ""))
-    st.checkbox("Skip this entry", key=f"{prefix}_skip_{idx}")
-
-
-# --- App --------------------------------------------------------------------
+    if st.button(f"Add another {title_label.lower()}", key=f"add_{entries_key}"):
+        entries.append({'title': '', 'name': '', 'start_time': '', 'end_time': '', 'location': '', 'description': ''})
+        st.rerun()
 
 def main():
-    ensure_dirs()
-    st.set_page_config(page_title="Conversational Intake", layout="centered")
+    """Main function to run the Streamlit app."""
+    st.title("Welcome! Let's get to know you.")
+    
+    initialize_session_state()
 
-    st.title("Conversational Intake — Streamlit Demo")
+    # Progress Bar
+    progress = st.session_state.step / 5.0
+    st.progress(progress)
 
-    # Ensure session state containers
-    if "messages" not in st.session_state:
-        st.session_state["messages"] = []
+    # Step 0: Basic Information
+    if st.session_state.step == 0:
+        st.header("Let's start with some basic information.")
+        st.session_state.user_data['firstname'] = st.text_input("First Name")
+        st.session_state.user_data['lastname'] = st.text_input("Last Name")
+        st.session_state.user_data['dob'] = str(st.date_input("Date of Birth", min_value=datetime(1950, 1, 1)))
+        st.session_state.user_data['email'] = st.text_input("Email Address")
+        st.session_state.user_data['phone'] = st.text_input("Phone Number")
+        st.header("Your online presence")
+        st.session_state.user_data['linkedin'] = st.text_input("LinkedIn Profile URL")
+        st.session_state.user_data['instagram'] = st.text_input("Instagram Profile URL")
+        st.session_state.user_data['facebook'] = st.text_input("Facebook Profile URL")
+        
+        if st.button("Next: Upload CV"):
+            st.session_state.step = 1
+            st.rerun()
 
-    if "personal" not in st.session_state:
-        st.session_state["personal"] = {}
+    # Step 1: CV Upload
+    elif st.session_state.step == 1:
+        st.header("Great! Now, please upload your CV/Resume.")
+        st.write("It helps us to get a better picture of you.")
+        uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+        if uploaded_file is not None:
+            script_dir = os.path.dirname(__file__)
+            upload_path = os.path.join(script_dir, "..", "data", "uploads", uploaded_file.name)
+            os.makedirs(os.path.dirname(upload_path), exist_ok=True)
+            with open(upload_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            st.session_state.user_data['cv_path'] = upload_path
+            st.success("CV uploaded successfully!")
+        
+        if st.button("Next: Your Status"):
+            st.session_state.step = 2
+            st.rerun()
 
-    if "student_entries" not in st.session_state:
-        st.session_state["student_entries"] = []
+    # Step 2: Student or Employee
+    elif st.session_state.step == 2:
+        st.header("What is your current professional status?")
+        status = st.radio("This helps us to ask the right questions.", ('Student', 'Employee'))
+        st.session_state.user_data['status'] = status
+        
+        if st.button("Next: Details"):
+            if status == 'Student':
+                st.session_state.step = 3
+            else:
+                st.session_state.step = 4
+            st.rerun()
 
-    if "employee_jobs" not in st.session_state:
-        st.session_state["employee_jobs"] = []
+    # Step 3: Student Questions
+    elif st.session_state.step == 3:
+        st.header("Tell us about your education.")
+        st.session_state.user_data['current_degree'] = st.text_input("What is your current degree program?")
+        st.session_state.user_data['school_degree'] = st.text_input("What was your highest school degree?")
+        
+        collect_dynamic_entries("other_degrees", "education_entries", "Other Degree", "University/School Name")
+        collect_dynamic_entries("working_experience", "experience_entries", "Working Experience", "Company Name")
+        
+        if st.button("Finish"):
+            st.session_state.user_data['other_degrees'] = st.session_state.education_entries
+            st.session_state.user_data['working_experience'] = st.session_state.experience_entries
+            st.session_state.step = 5
+            st.rerun()
 
-    if "employee_degrees" not in st.session_state:
-        st.session_state["employee_degrees"] = []
+    # Step 4: Employee Questions
+    elif st.session_state.step == 4:
+        st.header("Tell us about your professional life.")
+        st.session_state.user_data['current_job'] = st.text_input("What is your current job title?")
+        
+        collect_dynamic_entries("previous_jobs", "experience_entries", "Previous Job", "Company Name")
+        collect_dynamic_entries("university_degrees", "education_entries", "University Degree", "University Name")
 
-    if "cv_file" not in st.session_state:
-        st.session_state["cv_file"] = None
+        if st.button("Finish"):
+            st.session_state.user_data['previous_jobs'] = st.session_state.experience_entries
+            st.session_state.user_data['university_degrees'] = st.session_state.education_entries
+            st.session_state.step = 5
+            st.rerun()
 
-    # Intro
-    if not st.session_state["messages"]:
-        st.session_state["messages"].append(("bot", "Hi! I'll guide you through some quick questions — feel free to skip any. I'll save everything to a JSON file at the end."))
+    # Step 5: Save and Finish
+    elif st.session_state.step == 5:
+        st.balloons()
+        st.header("Thank you for your time!")
+        st.write("We have collected your information. Here is a summary:")
+        st.json(st.session_state.user_data)
+        save_data()
+        if st.button("Start Over"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.rerun()
 
-    # Show transcript
-    for who, text in st.session_state["messages"]:
-        chat_message(text, who=who)
-
-    st.markdown("---")
-
-    # Personal info
-    st.subheader("Personal information")
-    st.info("You can skip any individual field by checking the 'Skip' box next to it.")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        firstname = st.text_input("First name", key="firstname")
-        st.checkbox("Skip first name", key="skip_firstname")
-    with col2:
-        lastname = st.text_input("Last name", key="lastname")
-        st.checkbox("Skip last name", key="skip_lastname")
-
-    dob = st.date_input("Date of birth (DOB)", key="dob")
-    st.checkbox("Skip DOB", key="skip_dob")
-
-    email = st.text_input("Email address", key="email")
-    st.checkbox("Skip email", key="skip_email")
-
-    phone = st.text_input("Phone number", key="phone")
-    st.checkbox("Skip phone", key="skip_phone")
-
-    linkedin = st.text_input("LinkedIn profile (URL)", key="linkedin")
-    st.checkbox("Skip LinkedIn", key="skip_linkedin")
-
-    instagram = st.text_input("Instagram profile (URL)", key="instagram")
-    st.checkbox("Skip Instagram", key="skip_instagram")
-
-    facebook = st.text_input("Facebook profile (URL)", key="facebook")
-    st.checkbox("Skip Facebook", key="skip_facebook")
-
-    # CV upload
-    st.subheader("Upload CV / Resume")
-    uploaded_cv = st.file_uploader("Upload PDF CV/Resume", type=["pdf"], key="cv_upload")
-    if uploaded_cv:
-        st.session_state["cv_file"] = uploaded_cv
-        st.success(f"CV uploaded: {uploaded_cv.name}")
-
-    # Student or Employee selection
-    st.subheader("Are you a student or an employee?")
-    role = st.radio("Choose role (you can skip)", options=["Student", "Employee", "Prefer not to say"], index=2)
-
-    # Free-form questions
-    st.subheader("Tell us a bit about yourself")
-    free_text = st.text_area("Free field (you can skip)", key="free_text")
-    st.checkbox("Skip free text", key="skip_free_text")
-
-    st.markdown("---")
-
-    # Conditional sections
-    if role == "Student":
-        st.subheader("Student: Degrees & Experience")
-        st.info("Add current/previous degrees and any working experience. Each entry can be skipped.")
-
-        if st.button("Add degree / study entry", key="add_student_entry"):
-            st.session_state["student_entries"].append({})
-
-        # render each student entry
-        for i, _ in enumerate(st.session_state["student_entries"]):
-            st.markdown(f"**Entry {i+1}**")
-            render_position_block("student", i)
-            st.markdown("---")
-
-        st.subheader("Working experience (if any)")
-        if st.button("Add work experience entry", key="add_student_work"):
-            st.session_state["student_entries"].append({})
-
-    elif role == "Employee":
-        st.subheader("Employee: Current & Previous Jobs and Degrees")
-
-        st.info("Add current job, previous jobs and your university degrees. Each entry can be skipped.")
-
-        if st.button("Add job", key="add_employee_job"):
-            st.session_state["employee_jobs"].append({})
-
-        for i, _ in enumerate(st.session_state["employee_jobs"]):
-            st.markdown(f"**Job {i+1}**")
-            render_position_block("empjob", i)
-            st.markdown("---")
-
-        st.subheader("University degrees")
-        if st.button("Add degree", key="add_employee_degree"):
-            st.session_state["employee_degrees"].append({})
-
-        for i, _ in enumerate(st.session_state["employee_degrees"]):
-            st.markdown(f"**Degree {i+1}**")
-            render_position_block("empdeg", i)
-            st.markdown("---")
-
-    else:
-        st.info("You chose not to share role details. You can still fill other fields or skip them.")
-
-    st.markdown("---")
-
-    # Save / Submit
-    if st.button("Save and finish"):
-        # compile data respecting skip flags
-        data = {"meta": {"created_at": timestamp(), "role": role}}
-        personal = {}
-        if not st.session_state.get("skip_firstname"):
-            personal["firstname"] = st.session_state.get("firstname")
-        if not st.session_state.get("skip_lastname"):
-            personal["lastname"] = st.session_state.get("lastname")
-        if not st.session_state.get("skip_dob"):
-            dob_val = st.session_state.get("dob")
-            personal["dob"] = dob_val.isoformat() if dob_val else None
-        if not st.session_state.get("skip_email"):
-            personal["email"] = st.session_state.get("email")
-        if not st.session_state.get("skip_phone"):
-            personal["phone"] = st.session_state.get("phone")
-        if not st.session_state.get("skip_linkedin"):
-            personal["linkedin"] = st.session_state.get("linkedin")
-        if not st.session_state.get("skip_instagram"):
-            personal["instagram"] = st.session_state.get("instagram")
-        if not st.session_state.get("skip_facebook"):
-            personal["facebook"] = st.session_state.get("facebook")
-
-        data["personal"] = personal
-
-        if not st.session_state.get("skip_free_text"):
-            data["free_text"] = st.session_state.get("free_text")
-
-        # save cv
-        cv_path = save_uploaded_file(st.session_state.get("cv_file"))
-        data["cv_path"] = cv_path
-
-        # collect repeated entries
-        def collect_prefix_entries(prefix):
-            entries = []
-            idx = 0
-            # heuristics: keep scanning until a key doesn't exist for a few steps
-            # but we will scan up to 20
-            for idx in range(0, 40):
-                title_key = f"{prefix}_title_{idx}"
-                if title_key not in st.session_state:
-                    continue
-                skip_key = f"{prefix}_skip_{idx}"
-                if st.session_state.get(skip_key):
-                    continue
-                t = st.session_state.get(title_key)
-                if not t:
-                    # if empty, skip it too
-                    continue
-                entry = {
-                    "title": t,
-                    "org": st.session_state.get(f"{prefix}_org_{idx}"),
-                    "start": None,
-                    "end": None,
-                    "location": st.session_state.get(f"{prefix}_loc_{idx}"),
-                    "description": st.session_state.get(f"{prefix}_desc_{idx}"),
-                }
-                s = st.session_state.get(f"{prefix}_start_{idx}")
-                e = st.session_state.get(f"{prefix}_end_{idx}")
-                try:
-                    entry["start"] = s.isoformat() if s else None
-                    entry["end"] = e.isoformat() if e else None
-                except Exception:
-                    entry["start"] = s
-                    entry["end"] = e
-                entries.append(entry)
-            return entries
-
-        if role == "Student":
-            # student entries keyed by 'student'
-            student_entries = collect_prefix_entries("student")
-            data["student_entries"] = student_entries
-        elif role == "Employee":
-            data["jobs"] = collect_prefix_entries("empjob")
-            data["degrees"] = collect_prefix_entries("empdeg")
-
-        # final save
-        out_path = save_json(data, prefix="intake")
-        st.success(f"Saved JSON to {out_path}")
-        st.download_button("Download JSON", data=json.dumps(data, ensure_ascii=False, indent=2), file_name=os.path.basename(out_path), mime="application/json")
-    st.session_state["messages"].append(("bot", "Thanks — your answers were saved. You can download the JSON file above."))
-    # experimental_rerun was removed / is unavailable in some Streamlit builds.
-    # We keep the success message and the download button visible without forcing a rerun.
-
-    st.markdown("\n---\n")
-    st.caption("This is a demo to show how a conversational intake could be done in Streamlit. Each field can be skipped.")
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
