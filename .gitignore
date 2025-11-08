@@ -1,0 +1,12 @@
+# Ignore debug artifacts created by the scraper
+debug_*.html
+debug_*.png
+debug*.html
+debug*.png
+
+# Ignore any saved cookies or session files
+*.cookies.json
+
+# Ignore Python cache
+__pycache__/
+*.py[cod]
