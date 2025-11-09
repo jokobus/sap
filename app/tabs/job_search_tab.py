@@ -7,7 +7,7 @@ import tempfile
 import os
 from typing import List, Dict
 from pydantic import BaseModel, RootModel
-from google import genai
+import google.generativeai as genai
 
 class RankedJobParams(BaseModel):
     title: str
@@ -50,33 +50,74 @@ except Exception:
 
 
 def gemini_call_for_ranking(jobs: List[Dict], candidate_json: Dict) -> List[Dict]:
+    """Rank jobs using Gemini. Falls back to original order if API/key unavailable.
+
+    Expects `jobs` with keys: title, company, location, url, description, skills.
+    Returns list of same items plus `relevance_score` (0..1), sorted desc.
     """
-    Placeholder function to rank jobs using Gemini model.
-    Currently returns jobs unmodified.
-    """
-    client = genai.Client()
-    MODEL = "gemini-2.5-flash"
-    PROMPT = f""" 
-                You are an expert job ranking assistant. Given the candidate profile and a list of job postings,
-                rank the jobs based on relevance to the candidate's skills and experience.
-                Return the jobs sorted by relevance score (0-1), highest first, in JSON format
-                
-                Candidate Profile:
-                {candidate_json}    
-                
-                Job Postings:
-                {jobs}
-            """
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=PROMPT,
-        config={
-            "response_mime_type": "application/json",
-            "response_schema": RankedJobsList,
-        },
-    )
-    ranked_jobs = RankedJobsList.model_validate_json(response.text)
-    return [job.model_dump() for job in ranked_jobs.root]
+    import os, json as _json
+
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        # No key — return baseline scores (0.5) preserving order
+        out = []
+        for j in jobs:
+            jj = dict(j)
+            jj.setdefault("relevance_score", 0.5)
+            out.append(jj)
+        return out
+
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        prompt = (
+            "You are an expert job ranking assistant. Given the candidate profile and a list of job postings,\n"
+            "Rank the jobs based on relevance to the candidate's skills and experience.\n"
+            "Return ONLY a JSON array of objects sorted by descending relevance with keys: \n"
+            "['title','company','location','url','description','skills','relevance_score'] where relevance_score is a float between 0 and 1.\n\n"
+            f"Candidate Profile JSON:\n{_json.dumps(candidate_json)[:5000]}\n\n"
+            f"Job Postings JSON (array):\n{_json.dumps(jobs)[:8000]}\n\n"
+        )
+        resp = model.generate_content(prompt)
+        # Parse JSON
+        try:
+            data = _json.loads(resp.text)
+        except Exception:
+            # Try to extract first JSON array
+            import re
+            m = re.search(r"\[.*\]", resp.text, re.S)
+            data = _json.loads(m.group(0)) if m else []
+
+        # Validate minimally and fill defaults
+        out = []
+        for j in data:
+            jj = {
+                "title": j.get("title", ""),
+                "company": j.get("company", ""),
+                "location": j.get("location", ""),
+                "url": j.get("url", ""),
+                "description": j.get("description", ""),
+                "skills": j.get("skills", []) or [],
+                "relevance_score": float(j.get("relevance_score", 0.5)),
+            }
+            out.append(jj)
+        # If empty, fallback to baseline
+        if not out:
+            for j in jobs:
+                jj = dict(j)
+                jj.setdefault("relevance_score", 0.5)
+                out.append(jj)
+        # Sort by relevance desc
+        out.sort(key=lambda x: x.get("relevance_score", 0.0), reverse=True)
+        return out
+    except Exception:
+        # On any error, fallback
+        out = []
+        for j in jobs:
+            jj = dict(j)
+            jj.setdefault("relevance_score", 0.5)
+            out.append(jj)
+        return out
 
 def render_job_card1(job: dict, query_idx: int, job_idx: int) -> str:
     """

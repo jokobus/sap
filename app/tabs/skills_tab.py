@@ -17,8 +17,9 @@ Results are cached to avoid repeated API calls.
 """
 import streamlit as st
 import json
-from google import genai
+import os
 from dotenv import load_dotenv
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -54,21 +55,24 @@ Format your response in clean Markdown with headers, bullet points, and emojis (
 
 def analyze_with_gemini(candidate_json: dict) -> str:
     """Use Gemini to analyze candidate profile and generate skills analysis."""
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return (
+            "⚠️ No API key found for Gemini.\n"
+            "Set environment variable `GOOGLE_API_KEY` (or `GEMINI_API_KEY`).\n"
+            "Example PowerShell: `$env:GOOGLE_API_KEY='your-key-here'` then restart Streamlit."
+        )
+
     try:
-        client = genai.Client()
-        
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-2.0-flash")
         prompt = SKILLS_ANALYSIS_PROMPT.format(
             candidate_json=json.dumps(candidate_json, indent=2)
         )
-        
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
-        )
-        
+        response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return f"⚠️ Error analyzing profile: {str(e)}\n\nPlease check your API key and try again."
+        return f"⚠️ Error analyzing profile: {e}\n\nIf this persists, verify the model name or regenerate your API key."
 
 
 def render_skills_tab():

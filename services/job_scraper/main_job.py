@@ -1,17 +1,37 @@
-from google import genai
-from google.genai import types  # if needed
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+
+# Use google-generativeai (AI Studio) instead of deprecated google.genai
+try:
+    import google.generativeai as genai
+    _GENAI_AVAILABLE = True
+except ImportError:
+    genai = None  # type: ignore
+    _GENAI_AVAILABLE = False
+
+# Structured output types (optional). If not available, we'll fallback to plain JSON parsing.
+try:
+    from google.generativeai import types as genai_types  # type: ignore
+except Exception:
+    genai_types = None
 from services.job_scraper.job_schema import JobSearchList, JobSearchParams
 from typing import List
-from aggregator import parse_all
-from job_scraper import scrape_linkedin_jobs
+
+# Optional/demo imports (not required for extract_job_search_queries). Guard them.
+try:
+    from app.aggregator import parse_all  # type: ignore
+except Exception:
+    parse_all = None  # type: ignore
+try:
+    from services.job_scraper.job_scraper import scrape_linkedin_jobs  # type: ignore
+except Exception:
+    scrape_linkedin_jobs = None  # type: ignore
 import asyncio
 
 load_dotenv()
 
-client = genai.Client()
-MODEL = "gemini-2.5-flash"
+# Configure model lazily within function to avoid failing at import-time
+MODEL = "gemini-2.0-flash"
 
 PROMPT = """
             You are a job search assistant. Given the candidate's parsed profile JSON below, extract a structured list of job search parameters.
@@ -25,18 +45,54 @@ PROMPT = """
         """
 
 def extract_job_search_queries(candidate_json: dict) -> list[JobSearchParams]:
-    response = client.models.generate_content(
-        model=MODEL,  # or whichever version you're using
-        contents=PROMPT.format(candidate_json=candidate_json),
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=JobSearchList
-        )
+    if not _GENAI_AVAILABLE:
+        raise RuntimeError("google-generativeai is not installed. Install with `pip install google-generativeai`.")
+
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("Missing GOOGLE_API_KEY (or GEMINI_API_KEY) environment variable.")
+
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(MODEL)
+
+    prompt = PROMPT.format(candidate_json=candidate_json)
+
+    # Prefer structured response if supported; otherwise parse JSON from text
+    if genai_types and hasattr(genai_types, "GenerateContentConfig"):
+        try:
+            response = model.generate_content(
+                prompt,
+                generation_config=genai_types.GenerationConfig(response_mime_type="application/json"),
+            )
+            return JobSearchList.model_validate_json(response.text).model_dump()
+        except Exception:
+            # fallback to plain text JSON parsing
+            pass
+
+    # Fallback: ask for strict JSON and parse
+    json_prompt = (
+        "Return ONLY valid JSON array (no commentary) matching the schema: "
+        "[{\"keyword\": string, \"location\": string, \"experience\": string}]\n\n"
+        + prompt
     )
+    response = model.generate_content(json_prompt)
 
-    job_queries: List[JobSearchParams] = JobSearchList.model_validate_json(response.text).model_dump()
+    import json as _json
+    try:
+        data = _json.loads(response.text)
+    except Exception:
+        # Try to extract JSON block heuristically
+        import re
+        m = re.search(r"\[.*\]", response.text, re.S)
+        if not m:
+            raise RuntimeError("Model did not return JSON for job search queries.")
+        data = _json.loads(m.group(0))
 
-    return job_queries
+    # Validate and coerce using Pydantic schema
+    try:
+        return JobSearchList.model_validate(data).model_dump()
+    except Exception as e:
+        raise RuntimeError(f"Invalid job query JSON: {e}")
 
 
 
