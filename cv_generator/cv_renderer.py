@@ -197,5 +197,5 @@ def resume_to_pdf_bankcv(resume: dict, out_pdf: str, sidebar_cols=3):
 
 
 if __name__ == '__main__':
-    # Prefer using cv_renderer/generate_bankcv_pdf.py for path discovery and output handling.
-    print('Tip: Run "python cv_renderer/generate_bankcv_pdf.py" to render from data/{timestamp}_{identifier}/resume.json')
+    # Prefer using cv_generator/cv_generate_pdf.py for path discovery and output handling.
+    print('Tip: Run "python cv_generator/cv_generate_pdf.py" to render from data/{timestamp}_{identifier}/resume.json')

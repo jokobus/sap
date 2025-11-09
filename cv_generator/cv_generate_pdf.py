@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Generate a BankCV-styled PDF from a resume JSON using bankcv_renderer.
+"""Generate a BankCV-styled PDF from a resume JSON using cv_renderer.
 
 Expected layout:
   data/{timestamp}_{identifier}/resume.json  -> writes resume.pdf in same folder
 
 Usage:
-  python cv_renderer/generate_bankcv_pdf.py               # auto-picks latest data folder
-  python cv_renderer/generate_bankcv_pdf.py --dir PATH    # explicit data subfolder
-  python cv_renderer/generate_bankcv_pdf.py --file FILE   # explicit resume.json file
+    python cv_generator/cv_generate_pdf.py               # auto-picks latest data folder
+    python cv_generator/cv_generate_pdf.py --dir PATH    # explicit data subfolder
+    python cv_generator/cv_generate_pdf.py --file FILE   # explicit resume.json file
 """
 import argparse
 import json
 import sys
 from pathlib import Path
 from typing import Optional
-from bankcv_renderer import resume_to_pdf_bankcv
+from cv_generator.cv_renderer import resume_to_pdf_bankcv
 
 
 def find_latest_data_dir(data_root: Path) -> Optional[Path]:
@@ -44,7 +44,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     script_dir = Path(__file__).resolve().parent
-    repo_root = script_dir.parent  # cv_renderer/ -> repo root
+    repo_root = script_dir.parent  # cv_generator/ -> repo root
     data_root = repo_root / 'data'
 
     resume_path: Optional[Path] = None
