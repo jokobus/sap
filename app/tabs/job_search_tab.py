@@ -6,6 +6,21 @@ import pandas as pd
 import tempfile
 import os
 from typing import List, Dict
+from pydantic import BaseModel, RootModel
+from google import genai
+
+class RankedJobParams(BaseModel):
+    title: str
+    company: str
+    location: str
+    url: str
+    description: str
+    skills: List[str]
+    relevance_score: float
+
+class RankedJobsList(RootModel[List[RankedJobParams]]):
+    pass
+
 
 try:
     from services.job_scraper.main_job import extract_job_search_queries
@@ -34,7 +49,36 @@ except Exception:
     scrape_linkedin_jobs = None
 
 
-def render_job_card(job: dict, query_idx: int, job_idx: int) -> str:
+def gemini_call_for_ranking(jobs: List[Dict], candidate_json: Dict) -> List[Dict]:
+    """
+    Placeholder function to rank jobs using Gemini model.
+    Currently returns jobs unmodified.
+    """
+    client = genai.Client()
+    MODEL = "gemini-2.5-flash"
+    PROMPT = f""" 
+                You are an expert job ranking assistant. Given the candidate profile and a list of job postings,
+                rank the jobs based on relevance to the candidate's skills and experience.
+                Return the jobs sorted by relevance score (0-1), highest first, in JSON format
+                
+                Candidate Profile:
+                {candidate_json}    
+                
+                Job Postings:
+                {jobs}
+            """
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=PROMPT,
+        config={
+            "response_mime_type": "application/json",
+            "response_schema": RankedJobsList,
+        },
+    )
+    ranked_jobs = RankedJobsList.model_validate_json(response.text)
+    return [job.model_dump() for job in ranked_jobs.root]
+
+def render_job_card1(job: dict, query_idx: int, job_idx: int) -> str:
     """
     Render a job card with HTML formatting
     """
@@ -57,6 +101,7 @@ def render_job_card(job: dict, query_idx: int, job_idx: int) -> str:
         for s in skills
     ])
 
+    #TODO: Mofifying html card to show confidence percentage with nice modern UI
     html = f"""
     <div style='border:1px solid #e6e6e6;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.03)'>
       <div style='display:flex;justify-content:space-between;align-items:center'>
@@ -72,6 +117,62 @@ def render_job_card(job: dict, query_idx: int, job_idx: int) -> str:
       <div style='margin-top:10px'>{skill_html}</div>
     </div>
     """
+
+    return html
+
+
+def render_job_card(job: dict, query_idx: int, job_idx: int) -> str:
+    """
+    Render a job card with HTML formatting and confidence percentage.
+    """
+    title = job.get('title', 'Unknown Title')
+    company = job.get('company', 'Unknown Company')
+    location = job.get('location', 'Unknown Location')
+    url = job.get('url', '#')
+    desc = job.get('description', '') or ''
+    skills = job.get('skills', []) or []
+    relevance = job.get('relevance_score', 0.0)  # confidence score 0-1
+
+    # truncate description
+    if len(desc) > 600:
+        desc_short = desc[:600].rsplit(' ', 1)[0] + '...'
+    else:
+        desc_short = desc
+
+    skill_html = ''.join([
+        f"<span style='display:inline-block;padding:3px 8px;margin:2px;border-radius:12px;"
+        f"border:1px solid #ddd;font-size:12px'>{s}</span>" 
+        for s in skills
+    ])
+
+    # confidence bar HTML
+    conf_percent = int(relevance * 100)
+    conf_html = f"""
+    <div style='margin-top:8px'>
+        <div style='font-size:12px;color:#555;margin-bottom:2px'>Relevance: {conf_percent}%</div>
+        <div style='background:#eee;border-radius:8px;height:10px;width:100%'>
+            <div style='background:#0f62fe;height:100%;border-radius:8px;width:{conf_percent}%;'></div>
+        </div>
+    </div>
+    """
+
+    html = f"""
+    <div style='border:1px solid #e6e6e6;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.03)'>
+      <div style='display:flex;justify-content:space-between;align-items:center'>
+        <div style='max-width:75%'>
+          <div style='font-weight:700;font-size:16px'>{title}</div>
+          <div style='color:#555;margin-top:4px'>{company} • {location}</div>
+        </div>
+        <div style='text-align:right'>
+          <a href='{url}' target='_blank' style='background:#0f62fe;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;font-weight:600;margin-bottom:6px;display:inline-block'>Apply / Details</a>
+        </div>
+      </div>
+      <div style='margin-top:12px;color:#333'>{desc_short}</div>
+      <div style='margin-top:10px'>{skill_html}</div>
+      {conf_html}
+    </div>
+    """
+
     return html
 
 
@@ -109,6 +210,10 @@ def build_queries_and_run_scraper(pages: int, results_per_page: int, max_workers
         # normalize: ensure DataFrame
         if df is None:
             df = pd.DataFrame(columns=["title", "company", "location", "url", "description", "skills"])
+
+        ranked_jobs = gemini_call_for_ranking(df.to_dict(orient="records"), candidate_json)
+        #convert it back to DataFrame with all keys that JSON has
+        df = pd.DataFrame(ranked_jobs)
         st.session_state["job_results"][i] = df
 
 
