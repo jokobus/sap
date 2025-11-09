@@ -1,0 +1,70 @@
+{
+  "job": {
+    "title": "Senior Python Developer",
+    "company": "Google",
+    "location": "Munich, Germany",
+    "description": "We're looking for a Senior Python Developer with experience in Django, AWS, and microservices..."
+  },
+  "candidate": {
+    "name": "John Doe",
+    "skills": [
+      "Python",
+      "Django",
+      "AWS",
+      "Docker",
+      "Kubernetes"
+    ],
+    "experience": [
+      {
+        "title": "Software Engineer",
+        "company": "Tech Corp",
+        "duration": "2020-2023"
+      }
+    ]
+  },
+  "keywords": [
+    "Senior",
+    "Python",
+    "Developer"
+  ],
+  "search_query": "(site:linkedin.com/in OR site:linkedin.com/pub) \"Google\" \"Munich, Germany\" Senior Python Developer",
+  "results": [
+    {
+      "rank": 1,
+      "name": "Sarah Schmidt - Senior Python Engineer at Google",
+      "url": "https://linkedin.com/in/sarah-schmidt-google",
+      "snippet": "Senior Python Developer at Google Munich. Passionate about Django, AWS, and building scalable microservices. 8+ years experience in backend development.",
+      "engine": "serpapi"
+    },
+    {
+      "rank": 2,
+      "name": "Michael Weber - Python Tech Lead at Google",
+      "url": "https://linkedin.com/in/michael-weber-google-munich",
+      "snippet": "Tech Lead for Python development at Google Munich. Expertise in cloud infrastructure, AWS, Docker, Kubernetes. Leading a team of 12 engineers.",
+      "engine": "serpapi"
+    },
+    {
+      "rank": 3,
+      "name": "Lisa Müller - Senior Software Engineer",
+      "url": "https://linkedin.com/in/lisa-mueller-google",
+      "snippet": "Senior Software Engineer at Google. Working with Python, Django, and cloud technologies. Based in Munich, Germany.",
+      "engine": "duckduckgo"
+    },
+    {
+      "rank": 4,
+      "name": "Thomas Klein - Engineering Manager at Google",
+      "url": "https://linkedin.com/in/thomas-klein-google-munich",
+      "snippet": "Engineering Manager at Google Munich. Hiring for Python developers. Background in full-stack development and microservices architecture.",
+      "engine": "serpapi"
+    },
+    {
+      "rank": 5,
+      "name": "Anna Becker - Senior Backend Developer",
+      "url": "https://linkedin.com/in/anna-becker-google",
+      "snippet": "Senior Backend Developer specializing in Python and AWS at Google. Munich-based. Love building distributed systems.",
+      "engine": "duckduckgo"
+    }
+  ],
+  "total_found": 5,
+  "note": "These are MOCK results for demonstration purposes"
+}

@@ -35,16 +35,28 @@ if "selected_job" not in st.session_state:
     st.session_state["selected_job"] = None
 if "active_tab" not in st.session_state:
     st.session_state["active_tab"] = "Profile"
+if "nav_to_tab" not in st.session_state:
+    st.session_state["nav_to_tab"] = None
+
+# Check if we need to navigate to a different tab (set by buttons)
+if st.session_state["nav_to_tab"]:
+    st.session_state["active_tab"] = st.session_state["nav_to_tab"]
+    st.session_state["nav_to_tab"] = None
 
 # ---------------------------
 # Sidebar: tabs + global controls
 # ---------------------------
 st.sidebar.title("Workspace")
-st.session_state["active_tab"] = st.sidebar.radio(
+# Radio button for tab navigation
+tab_options = ["Profile", "What Am I good at?", "Job Search", "Reach out"]
+current_tab = st.sidebar.radio(
     "Select page",
-    ["Profile", "What Am I good at?", "Job Search", "Reach out"],
-    index=["Profile", "What Am I good at?", "Job Search", "Reach out"].index(st.session_state.get("active_tab", "Profile"))
+    tab_options,
+    index=tab_options.index(st.session_state["active_tab"]),
+    key="tab_radio"
 )
+# Update active_tab based on radio selection
+st.session_state["active_tab"] = current_tab
 st.sidebar.markdown("---")
 pages = st.sidebar.number_input("Pages per query", value=2, min_value=1, max_value=10, key="sid_pages")
 results_per_page = st.sidebar.number_input("Results per page", value=5, min_value=1, max_value=25, key="sid_results")

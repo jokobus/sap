@@ -1,0 +1,508 @@
+"""
+Reach Out Tab - Contact and communication functionality
+"""
+import streamlit as st
+import pandas as pd
+import json
+import os
+import sys
+from pathlib import Path
+
+# Add services to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "services"))
+
+try:
+    from linkedinsearch.search_linkedin import build_query, serpapi_search, ddg_html_search
+except ImportError as e:
+    st.error(f"Import error: {e}. LinkedIn search not available.")
+    build_query = None
+    serpapi_search = None
+    ddg_html_search = None
+
+
+def search_linkedin_profiles(keywords, company, location="", num_results=10):
+    """Search for LinkedIn profiles - SIMPLIFIED"""
+    try:
+        from linkedinsearch.search_linkedin import build_query as bq
+        
+        # Build simple query
+        query = bq(keywords=keywords, company=company, location=location)
+        st.info(f"🔍 Search: `{query}`")
+        
+        # Try SerpAPI first
+        serp_key = os.environ.get("SERPAPI_API_KEY")
+        results = []
+        
+        if serp_key:
+            try:
+                results = serpapi_search(query, num=num_results, api_key=serp_key)
+                st.success(f"✅ Found {len(results)} profiles via SerpAPI")
+            except Exception as e:
+                st.warning(f"SerpAPI failed: {e}")
+        
+        # Fallback to DuckDuckGo
+        if not results:
+            st.info("Using DuckDuckGo (free)")
+            results = ddg_html_search(query, num=num_results, debug=False)
+        
+        return results if results else []
+    except Exception as e:
+        st.error(f"LinkedIn search failed: {e}")
+        import traceback
+        st.code(traceback.format_exc())
+        return []
+
+
+def render_reach_out_tab():
+    """
+    Render the Reach out tab - linked to selected job
+    Shows contact information and message templates
+    """
+    st.header("Reach out")
+    
+    # Initialize session state variables if not present
+    if "extracted_keywords" not in st.session_state:
+        st.session_state["extracted_keywords"] = None
+    if "linkedin_search_results" not in st.session_state:
+        st.session_state["linkedin_search_results"] = None
+    if "selected_contact" not in st.session_state:
+        st.session_state["selected_contact"] = None
+    if "generated_message" not in st.session_state:
+        st.session_state["generated_message"] = None
+    if "outreach_log" not in st.session_state:
+        st.session_state["outreach_log"] = []
+    
+    selected = st.session_state.get("selected_job")
+    
+    if not selected:
+        st.info("No job selected. From the Job Search tab, click 'Open Reach out' on a job card to bring it here.")
+        
+        if st.session_state.get("job_queries"):
+            st.write("Or pick a job to demo reach-out UI:")
+            q = st.session_state["job_queries"][0]
+            df = st.session_state["job_results"].get(0, pd.DataFrame())
+            if not df.empty:
+                if st.button("Select first job from first query (demo)", key="demo_select_job"):
+                    st.session_state["selected_job"] = {
+                        "query_index": 0, 
+                        "job_index": 0, 
+                        "job": df.iloc[0].to_dict()
+                    }
+                    st.rerun()
+        return
+    
+    # Check if candidate profile exists
+    candidate_json = st.session_state.get("candidate_json")
+    if not candidate_json:
+        st.warning("⚠️ No candidate profile found. Please go to the Profile tab and upload your resume/LinkedIn profile first.")
+        st.stop()
+    
+    job = selected["job"]
+    
+    # Display job info
+    st.subheader(f"📋 {job.get('title', 'N/A')}")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write(f"**Company:** {job.get('company', 'N/A')}")
+    with col2:
+        st.write(f"**Location:** {job.get('location', 'N/A')}")
+    with col3:
+        relevance = job.get('relevance_score', 0)
+        st.write(f"**Relevance:** {relevance:.1%}" if isinstance(relevance, (int, float)) else "**Relevance:** N/A")
+    
+    # Simple LinkedIn Profile Search
+    st.markdown("### 🔍 Find LinkedIn Contacts")
+    st.markdown("---")
+    
+    # Display job context
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("🏢 Company", job.get("company", "Not specified"))
+    with col2:
+        st.metric("📍 Location", job.get("location", "Not specified"))
+    with col3:
+        num_profiles = st.number_input("Profiles to find", 5, 20, 10)
+    
+    st.markdown("---")
+    
+    # Simple keyword input
+    st.markdown("### 🔑 Keywords")
+    
+    # Auto-generate simple keywords from job title
+    job_title = job.get('title', '')
+    suggested_keywords = []
+    if job_title:
+        # Extract words from title (simple approach)
+        words = job_title.split()
+        suggested_keywords = [w for w in words if len(w) > 3][:2]  # Only top 2
+    
+    # Manual keyword input
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        keywords_input = st.text_input(
+            "Keywords (comma-separated)",
+            value=", ".join(suggested_keywords) if suggested_keywords else "",
+            placeholder="e.g., Python, Senior",
+            key="keywords_input"
+        )
+    with col2:
+        if st.button("🎯 Auto-fill", key="autofill_btn"):
+            st.session_state["keywords_input"] = ", ".join(suggested_keywords)
+            st.rerun()
+    
+    # Parse keywords
+    keywords = [k.strip() for k in keywords_input.split(",") if k.strip()] if keywords_input else []
+    
+    if keywords:
+        st.info(f"Using: {', '.join(keywords[:2])}")  # Show only top 2
+        
+    # Search button
+    st.markdown("---")
+    if st.button("🔍 Search LinkedIn Profiles", use_container_width=True, type="primary", key="search_linkedin_btn"):
+        if not keywords:
+            st.error("⚠️ Please enter at least one keyword!")
+        else:
+            with st.spinner("Searching..."):
+                try:
+                    results = search_linkedin_profiles(
+                        keywords=keywords[:2],  # Only use top 2
+                        company=job.get("company", ""),
+                        location=job.get("location", ""),
+                        num_results=num_profiles
+                    )
+                    st.session_state["linkedin_search_results"] = results
+                    if results:
+                        st.success(f"✅ Found {len(results)} profiles!")
+                    else:
+                        st.warning("No profiles found. Try different keywords.")
+                except Exception as e:
+                    st.error(f"Search failed: {e}")
+                
+                # Display search results
+                if st.session_state.get("linkedin_search_results"):
+                    results = st.session_state["linkedin_search_results"]
+                    st.success(f"✅ Found {len(results)} LinkedIn profiles")
+                    
+                    # Create a clean display of contacts
+                    st.markdown("### 👥 Relevant People to Contact")
+                    st.markdown("---")
+                    
+                    for i, result in enumerate(results, 1):
+                        # Extract name from result
+                        name = result.get('name', 'Unknown Profile')
+                        url = result.get('url', '#')
+                        snippet = result.get('snippet', 'No description available')
+                        engine = result.get('engine', 'N/A')
+                        
+                        # Create a card-like display for each contact
+                        col1, col2 = st.columns([5, 1])
+                        
+                        with col1:
+                            # Display name as a clickable link
+                            st.markdown(f"#### {i}. [{name}]({url})")
+                            st.caption(f"🔍 Found via: {engine.capitalize()}")
+                            
+                            # Show snippet in a clean format
+                            if snippet and snippet.strip():
+                                st.markdown(f"*{snippet[:200]}...*" if len(snippet) > 200 else f"*{snippet}*")
+                            
+                            # Display profile link prominently
+                            st.markdown(f"🔗 **Profile:** `{url}`")
+                        
+                        with col2:
+                            # Select button
+                            if st.button("✅ Select", key=f"select_contact_{i}", use_container_width=True):
+                                st.session_state["selected_contact"] = result
+                                st.success(f"Selected: {name}")
+                        
+                        st.markdown("---")
+                    
+                    # Summary section
+                    st.info(f"💡 **Tip:** Click '✅ Select' on a contact above to generate a personalized message in the 'Generate Message' tab.")
+                    
+                    # Create a summary table for easy reference
+                    st.markdown("### 📊 Summary Table")
+                    contacts_df = pd.DataFrame([
+                        {
+                            "Name": r.get("name", "Unknown"),
+                            "Profile URL": r.get("url", ""),
+                            "Source": r.get("engine", "N/A").capitalize()
+                        }
+                        for r in results
+                    ])
+                    st.dataframe(contacts_df, use_container_width=True, hide_index=True)
+                    
+                    # Export options
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        csv_data = contacts_df.to_csv(index=False)
+                        st.download_button(
+                            "📥 Download as CSV",
+                            csv_data,
+                            "linkedin_contacts.csv",
+                            "text/csv",
+                            key="download_contacts_csv",
+                            use_container_width=True
+                        )
+                    with col2:
+                        json_data = json.dumps([r for r in results], indent=2)
+                        st.download_button(
+                            "📥 Download as JSON",
+                            json_data,
+                            "linkedin_contacts.json",
+                            "application/json",
+                            key="download_contacts_json",
+                            use_container_width=True
+                        )
+                
+                # Manual input as fallback
+                st.markdown("---")
+                st.markdown("### 🔧 Manual Contact Entry (Hackathon Mode)")
+                with st.expander("Can't find profiles automatically? Add manually"):
+                    manual_name = st.text_input("Contact Name", key="manual_name")
+                    manual_url = st.text_input("LinkedIn URL", key="manual_url", placeholder="https://linkedin.com/in/...")
+                    manual_snippet = st.text_area("Notes/Snippet", key="manual_snippet", placeholder="Role, company, etc.")
+                    
+                    if st.button("➕ Add Manual Contact", key="add_manual_contact"):
+                        if manual_name and manual_url:
+                            manual_contact = {
+                                "rank": 0,
+                                "name": manual_name,
+                                "url": manual_url,
+                                "snippet": manual_snippet,
+                                "engine": "manual"
+                            }
+                            st.session_state["selected_contact"] = manual_contact
+                            st.success(f"✅ Added manual contact: {manual_name}")
+                        else:
+                            st.error("Please enter at least name and URL")
+
+
+if __name__ == "__main__":
+        
+        # Simple message template section
+        if candidate_json:
+            col1, col2 = st.columns(2)
+            with col1:
+                message_type = st.selectbox(
+                    "Message Type",
+                    ["linkedin_connection", "linkedin_message", "email"],
+                    format_func=lambda x: {
+                        "linkedin_connection": "LinkedIn Connection Request",
+                        "linkedin_message": "LinkedIn InMail/Message",
+                        "email": "Email"
+                    }[x]
+                )
+            
+            with col2:
+                tone = st.selectbox(
+                    "Tone",
+                    ["professional", "friendly", "enthusiastic"],
+                    format_func=lambda x: x.capitalize()
+                )
+            
+            # Show selected contact if any
+            selected_contact = st.session_state.get("selected_contact")
+            if selected_contact:
+                st.success(f"✅ Selected: **{selected_contact.get('name', 'Contact')}**")
+                st.write(f"Profile: {selected_contact.get('url', 'N/A')}")
+            
+            # Simple message template
+            st.markdown("---")
+            st.markdown("#### Message Template")
+            
+            candidate_name = candidate_json.get('name', 'Your Name')
+            candidate_skills = candidate_json.get('skills', [])
+            job_title = job.get('title', 'Position')
+            company = job.get('company', 'Company')
+            
+            template = f"""Hi [Contact Name],
+
+I came across your profile while researching {company} and noticed you're involved with {job_title} opportunities.
+
+I'm {candidate_name}, and I have experience in {', '.join(candidate_skills[:3]) if candidate_skills else '[your skills]'}. I'm very interested in the {job_title} role at {company}.
+
+Would you be open to a brief conversation about the position and team?
+
+Best regards,
+{candidate_name}"""
+            
+            message_text = st.text_area(
+                "Edit your message:",
+                value=template,
+                height=300,
+                key="message_template"
+            )
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("📋 Copy Message", key="copy_msg_btn", use_container_width=True):
+                    st.code(message_text, language="text")
+                    st.success("✅ Message ready to copy!")
+            with col2:
+                if st.button("💾 Save Message", key="save_msg_btn", use_container_width=True):
+                    st.session_state["generated_message"] = {
+                        "body": message_text,
+                        "message_type": "template"
+                    }
+                    st.success("✅ Message saved!")
+        else:
+            st.warning("⚠️ No candidate profile loaded. Please upload your profile in the Profile tab first.")
+    
+    with tab3:
+        st.markdown("### Contact Manager")
+        st.info("📊 Track your outreach efforts here")
+        
+        # Show selected contact if any
+        if st.session_state.get("selected_contact"):
+            contact = st.session_state["selected_contact"]
+            st.write("**Selected Contact:**")
+            st.json(contact)
+        
+        # Log outreach
+        if st.session_state.get("selected_contact") and st.session_state.get("generated_message"):
+            if st.button("✅ Log this outreach", key="log_outreach_btn"):
+                log_entry = {
+                    "job_title": job.get("title"),
+                    "company": job.get("company"),
+                    "contact": st.session_state["selected_contact"],
+                    "message_type": st.session_state["generated_message"].get("message_type"),
+                    "timestamp": pd.Timestamp.now().isoformat()
+                }
+                st.session_state["outreach_log"].append(log_entry)
+                st.success("✅ Outreach logged!")
+        
+        # Display outreach log
+        if st.session_state["outreach_log"]:
+            st.markdown("---")
+            st.write(f"**Total Outreach Activities:** {len(st.session_state['outreach_log'])}")
+            
+            df_log = pd.DataFrame(st.session_state["outreach_log"])
+            st.dataframe(df_log, use_container_width=True)
+            
+            # Export option
+            csv = df_log.to_csv(index=False)
+            st.download_button(
+                "📥 Export to CSV",
+                csv,
+                "outreach_log.csv",
+                "text/csv",
+                key="download_log_csv"
+            )
+        else:
+            st.write("No outreach activities logged yet.")
+
+
+if __name__ == "__main__":
+    """Test the LinkedIn search functionality without Streamlit"""
+    import sys
+    from pathlib import Path
+    
+    # Add services to path
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent / "services"))
+    
+    from linkedinsearch.search_linkedin import build_query, serpapi_search, ddg_html_search
+    
+    print("=" * 60)
+    print("Testing LinkedIn Search Functionality")
+    print("=" * 60)
+    
+    # Dummy job data
+    dummy_job = {
+        "title": "Senior Python Developer",
+        "company": "Google",
+        "location": "Munich, Germany",
+        "description": "We're looking for a Senior Python Developer with experience in Django, AWS, and microservices..."
+    }
+    
+    # Dummy candidate data
+    dummy_candidate = {
+        "name": "Shishir Sunar",
+        "skills": ["Python", "Django", "AWS", "Docker", "Kubernetes"],
+        "experience": [
+            {"title": "Software Engineer", "company": "Tech Corp", "duration": "2020-2023"}
+        ]
+    }
+    
+    # Extract simple keywords from job title
+    job_title_words = dummy_job["title"].split()
+    keywords = [w for w in job_title_words if len(w) > 3][:3]
+    
+    print(f"\n📋 Job: {dummy_job['title']}")
+    print(f"🏢 Company: {dummy_job['company']}")
+    print(f"📍 Location: {dummy_job['location']}")
+    print(f"\n🔑 Keywords: {', '.join(keywords)}")
+    
+    # Build search query
+    query = build_query(
+        keywords=keywords,
+        company=dummy_job["company"],
+        location=dummy_job["location"]
+    )
+    
+    print(f"\n🔍 Search Query:\n{query}")
+    
+    # Try to search
+    import os
+    serp_key = os.environ.get("SERPAPI_API_KEY")
+    
+    results = []
+    print("\n" + "=" * 60)
+    print("Starting LinkedIn Search...")
+    print("=" * 60)
+    
+    if serp_key:
+        print("\n✅ SERPAPI_API_KEY found - using SerpAPI for best results...")
+        try:
+            results = serpapi_search(query, num=5, api_key=serp_key)
+            print(f"✅ SerpAPI returned {len(results)} results")
+        except Exception as e:
+            print(f"❌ SerpAPI failed: {e}")
+            print("⚠️  Falling back to DuckDuckGo...")
+            results = []
+    else:
+        print("\n⚠️  SERPAPI_API_KEY not found in environment")
+        print("💡 Add it to .env for better results (get free key at serpapi.com)")
+    
+    # Fallback to DuckDuckGo
+    if not results:
+        print("\n🔍 Using DuckDuckGo (free, but less reliable)...")
+        try:
+            results = ddg_html_search(query, num=5, debug=True)
+            print(f"✅ DuckDuckGo returned {len(results)} results")
+        except Exception as e:
+            print(f"❌ DuckDuckGo failed: {e}")
+    
+    # Display results
+    print("\n" + "=" * 60)
+    print(f"FOUND {len(results)} LINKEDIN PROFILES")
+    print("=" * 60)
+    
+    if results:
+        for i, result in enumerate(results, 1):
+            print(f"\n{i}. {result.get('name', 'Unknown Profile')}")
+            print(f"   🔗 URL: {result.get('url', 'N/A')}")
+            print(f"   📝 Snippet: {result.get('snippet', 'No description')[:100]}...")
+            print(f"   🔍 Source: {result.get('engine', 'N/A')}")
+    else:
+        print("\n❌ No profiles found!")
+        print("\nPossible reasons:")
+        print("  • DuckDuckGo rate limiting or CAPTCHA")
+        print("  • Network issues")
+        print("  • Too restrictive keywords")
+        print("\nSuggestions:")
+        print("  • Add SERPAPI_API_KEY to your .env file")
+        print("  • Try with fewer/different keywords")
+        print("  • Wait a few minutes and try again")
+    
+    print("\n" + "=" * 60)
+    print("Test Complete!")
+    print("=" * 60)
+    
+    # Save results to file for inspection
+    if results:
+        import json
+        output_file = "test_linkedin_search_results.json"
+        with open(output_file, "w") as f:
+            json.dump(results, f, indent=2)
+        print(f"\n💾 Results saved to: {output_file}")

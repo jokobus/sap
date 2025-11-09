@@ -25,28 +25,29 @@ from bs4 import BeautifulSoup
 SERPAPI_KEY_ENV = "SERPAPI_API_KEY"
 
 
-def build_query(keywords: List[str], company: Optional[str] = None) -> str:
-    # base: look only at person profile pages
-    base = "(site:linkedin.com/in OR site:linkedin.com/pub)"
-    parts = [base]
-    if keywords:
-        # include each keyword phrase (if multi-word, keep as-is)
-        parts.extend([f'"{k}"' if " " in k else k for k in keywords])
+def build_query(keywords: List[str], company: Optional[str] = None, location: Optional[str] = None) -> str:
+    """Build a simple LinkedIn profile search query - SUPPORTS 3-5 KEYWORDS"""
+    parts = ["site:linkedin.com/in"]
+    
+    # Add company (most important)
     if company:
         parts.append(f'"{company}"')
-
-    exclusions = [
-        "-site:linkedin.com/company",
-        "-site:linkedin.com/jobs",
-        "-inurl:/pulse/",
-        "-inurl:/posts/",
-        "-inurl:/feed/",
-        "-inurl:/jobs/",
-        "-inurl:/company/",
-        "-inurl:/school/",
-        "-inurl:/groups/",
-    ]
-    parts.extend(exclusions)
+    
+    # Add location if provided
+    if location:
+        parts.append(f'"{location}"')
+    
+    # Add 3-5 keywords for better targeting
+    if keywords:
+        for k in keywords[:5]:  # Up to 5 keywords
+            if k and len(k.strip()) > 0:
+                clean_keyword = k.strip()
+                # Quote multi-word keywords
+                if ' ' in clean_keyword:
+                    parts.append(f'"{clean_keyword}"')
+                else:
+                    parts.append(clean_keyword)
+    
     return " ".join(parts)
 
 

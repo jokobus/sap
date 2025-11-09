@@ -1,0 +1,69 @@
+{
+  "job": {
+    "title": "Senior Python Developer",
+    "company": "Google",
+    "location": "Munich, Germany",
+    "description": "We're looking for a Senior Python Developer with experience in Django, AWS, and microservices..."
+  },
+  "candidate": {
+    "name": "John Doe",
+    "skills": [
+      "Python",
+      "Django",
+      "AWS",
+      "Docker",
+      "Kubernetes"
+    ],
+    "experience": [
+      {
+        "title": "Software Engineer",
+        "company": "Tech Corp",
+        "duration": "2020-2023"
+      }
+    ]
+  },
+  "keywords": [
+    "Senior",
+    "Python",
+    "Developer"
+  ],
+  "search_query": "site:linkedin.com/in \"Google\" \"Munich, Germany\" Senior Python Developer",
+  "results": [
+    {
+      "rank": 1,
+      "name": "Giorgi Khosroshvili – Senior Software Engineer at Google",
+      "url": "https://de.linkedin.com/in/xosrika",
+      "snippet": "June 2022 I joined Google EMEA in Munich, Germany as a Software Engineer and I am working in the Merchants and Brands Team for Commerce, Shopping. To be ...",
+      "engine": "serpapi"
+    },
+    {
+      "rank": 2,
+      "name": "Muhammad Haris Asif – Senior Software Engineer ...",
+      "url": "https://de.linkedin.com/in/mharisasif",
+      "snippet": "... Munich, Germany. My previous roles include Software Developer at ... Senior Software Engineer at MediaMarktSaturn | Google Cloud Certified Cloud Engineer ...",
+      "engine": "serpapi"
+    },
+    {
+      "rank": 3,
+      "name": "Shruti Chikode – Senior Data Engineer | Munich, Germany",
+      "url": "https://de.linkedin.com/in/shruti-chikode-232473114",
+      "snippet": "Senior Data Engineer | Munich, Germany | Data Architecture | Big Data ... Continue with GoogleContinue with Google. Neu bei LinkedIn? Mitglied werden.",
+      "engine": "serpapi"
+    },
+    {
+      "rank": 4,
+      "name": "Andrew Cring - Python Developer",
+      "url": "https://www.linkedin.com/in/andrew-cring-ac17",
+      "snippet": "Continue with GoogleContinue with Google. New to LinkedIn? Join now · Join to ... Communicated statistics through headquarters in Munich, Germany.",
+      "engine": "serpapi"
+    },
+    {
+      "rank": 5,
+      "name": "Najeeb Khan – Senior Data Engineer",
+      "url": "https://de.linkedin.com/in/najeebkhan97",
+      "snippet": "Continue with GoogleContinue with Google. Neu bei LinkedIn? Mitglied ... Development Wing for Machine Vision in ASM Assembly Systems, Munich, Germany.",
+      "engine": "serpapi"
+    }
+  ],
+  "total_found": 5
+}

@@ -231,7 +231,7 @@ def build_queries_and_run_scraper(pages: int, results_per_page: int, max_workers
     st.session_state["job_queries"] = queries
 
     # Run scraper for each query if scraper exists. Otherwise leave placeholder empty DF.
-    for i, q in enumerate(queries):
+    for i, q in enumerate(queries[:1]):
         if scrape_linkedin_jobs is None:
             df = pd.DataFrame(columns=["title", "company", "location", "url", "description", "skills"])
         else:
@@ -240,9 +240,9 @@ def build_queries_and_run_scraper(pages: int, results_per_page: int, max_workers
                     keywords=q["keyword"],
                     location=q.get("location", ""),
                     experience=q.get("experience", ""),
-                    pages=int(pages),
-                    results_per_page=int(results_per_page),
-                    max_workers=int(max_workers),
+                    pages=1,
+                    results_per_page=2,
+                    max_workers=1,
                     out_csv=None,
                 )
             except Exception as e:
@@ -312,13 +312,13 @@ def render_job_search_tab():
             job = df.iloc[idx].to_dict()
             html = render_job_card(job, i-1, idx)
             st.markdown(html, unsafe_allow_html=True)
-            if st.button("Open Reach out (placeholder)", key=f"open_reach_{i-1}_{idx}"):
+            if st.button("Open Reach out", key=f"open_reach_{i-1}_{idx}"):
                 st.session_state["selected_job"] = {
                     "query_index": i-1, 
                     "job_index": idx, 
                     "job": job
                 }
-                st.session_state["active_tab"] = "Reach out"
+                st.session_state["nav_to_tab"] = "Reach out"
                 st.rerun()
 
         # Dataframe expander
