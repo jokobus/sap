@@ -3,6 +3,10 @@
 
 Saves results to a JSON file with entries containing: rank, name (if available), url, snippet, engine
 """
+
+# run with
+# python cv_generator/cv_generate_pdf.py
+
 from __future__ import annotations
 
 import argparse

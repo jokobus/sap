@@ -14,7 +14,17 @@ import json
 import sys
 from pathlib import Path
 from typing import Optional
-from cv_generator.cv_renderer import resume_to_pdf_bankcv
+try:
+    # When executed with `python -m cv_generator.cv_generate_pdf`
+    from cv_generator.cv_renderer import resume_to_pdf_bankcv
+except ModuleNotFoundError:
+    # When executed as a file path: `python cv_generator/cv_generate_pdf.py`
+    # ensure repo root is on sys.path so absolute import works
+    script_path = Path(__file__).resolve()
+    repo_root_fallback = script_path.parent.parent
+    if str(repo_root_fallback) not in sys.path:
+        sys.path.insert(0, str(repo_root_fallback))
+    from cv_generator.cv_renderer import resume_to_pdf_bankcv
 
 
 def find_latest_data_dir(data_root: Path) -> Optional[Path]:
@@ -41,6 +51,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description='Render resume.json to resume.pdf (BankCV style).')
     parser.add_argument('--dir', dest='dir', help='Path to data/{timestamp}_{identifier} folder containing resume.json')
     parser.add_argument('--file', dest='file', help='Explicit path to resume.json')
+    parser.add_argument('--all', action='store_true', help='Process all subfolders under data/ that contain resume.json')
     args = parser.parse_args(argv)
 
     script_dir = Path(__file__).resolve().parent
@@ -49,6 +60,30 @@ def main(argv=None) -> int:
 
     resume_path: Optional[Path] = None
     out_dir: Optional[Path] = None
+
+    if args.all:
+        # bulk mode: iterate all data/*/resume.json
+        count = 0
+        if data_root.exists():
+            for child in sorted(data_root.iterdir()):
+                if not child.is_dir():
+                    continue
+                rp = child / 'resume.json'
+                if not rp.exists():
+                    continue
+                try:
+                    with open(rp, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    out_pdf = child / 'resume.pdf'
+                    resume_to_pdf_bankcv(data, str(out_pdf))
+                    print('Saved', out_pdf)
+                    count += 1
+                except Exception as e:
+                    print(f"Error processing {rp}: {e}")
+        if count == 0:
+            print('No data subfolders with resume.json found under', data_root)
+            return 1
+        return 0
 
     if args.file:
         resume_path = Path(args.file)
