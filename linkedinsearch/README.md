@@ -30,3 +30,33 @@ Query tips for best relevance
 Notes
 - This script does not log into LinkedIn and only collects public profile URLs returned by search engines.
 - For production or heavy usage, use SerpAPI or a paid search API to avoid blocking and increase reliability.
+
+Debugging & tests
+------------------
+
+This project contains improved DuckDuckGo HTML parsing and basic debug helpers to make diagnosing empty/blocked results easier.
+
+- The DuckDuckGo fetch now uses realistic request headers, a timeout, and a small retry loop to reduce transient failures.
+- The HTML parser was refactored into `parse_ddg_html()` which decodes common DuckDuckGo redirect parameters (like `uddg=`), normalizes URLs, and filters out non-profile LinkedIn paths (company, jobs, posts, etc.).
+- If the parser finds no LinkedIn results, the script will automatically save the returned HTML to `linkedinsearch/debug_ddg_<timestamp>.html` so you can inspect whether the search engine returned a consent/captcha/blocked page or a changed DOM.
+
+Test fixture and a lightweight test runner are included to validate the parser without additional test dependencies:
+
+Run the quick test locally:
+
+```powershell
+python tests/run_tests.py
+```
+
+This reads `linkedinsearch/fixtures/ddg_sample.html` and checks that the parser extracts expected LinkedIn profile URLs. Use this as a starting point for adding more fixtures (different result DOMs) to guard against future parsing regressions.
+
+Dependencies
+------------
+
+Make sure the environment has the required packages installed for running the script and the parser tests:
+
+```powershell
+python -m pip install -r linkedinsearch/requirements.txt
+```
+
+If you prefer `pytest`, you can convert `tests/run_tests.py` to a pytest-based test file and run `pytest` in CI.
