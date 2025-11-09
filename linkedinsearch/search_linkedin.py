@@ -10,6 +10,9 @@ import json
 import os
 import re
 import sys
+import time
+import datetime
+import urllib.parse
 from typing import List, Dict, Optional
 
 import requests
@@ -81,61 +84,130 @@ def ddg_html_search(query: str, num: int = 10, dump_html: Optional[str] = None, 
     Not as reliable as SerpAPI, but works without API key.
     """
     url = "https://html.duckduckgo.com/html/"
-    resp = requests.post(url, data={"q": query})
-    resp.raise_for_status()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    # basic retry loop with exponential backoff
+    resp = None
+    for attempt in range(1, 4):
+        try:
+            resp = requests.post(url, data={"q": query}, headers=headers, timeout=10)
+            resp.raise_for_status()
+            break
+        except Exception as e:
+            if attempt >= 3:
+                raise
+            time.sleep(0.5 * (2 ** (attempt - 1)))
+
+    if resp is None:
+        return []
+
     if dump_html:
         try:
             with open(dump_html, "w", encoding="utf-8") as fh:
                 fh.write(resp.text)
         except Exception:
             pass
-    soup = BeautifulSoup(resp.text, "html.parser")
-    links = []
-    # DuckDuckGo HTML results commonly have anchors with class 'result__a'
-    a_tags = soup.find_all("a", href=True)
+
+    links = parse_ddg_html(resp.text, num=num, debug=debug)
+
+    # if parsing found nothing, save a debug dump (use timestamped name) so user can inspect
+    if not links:
+        try:
+            ts = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            debug_path = os.path.join("linkedinsearch", f"debug_ddg_{ts}.html")
+            with open(debug_path, "w", encoding="utf-8") as fh:
+                fh.write(resp.text)
+            print(f"[debug] No results parsed — saved HTML to {debug_path}")
+            low = resp.text.lower()
+            if "captcha" in low or "recaptcha" in low or "verify" in low:
+                print("[debug] Page contains likely anti-bot or captcha content.")
+        except Exception:
+            pass
+
+    return links
+
+
+def parse_ddg_html(html: str, num: int = 10, debug: bool = False) -> List[Dict]:
+    """Parse DuckDuckGo HTML search results and extract LinkedIn profile links.
+
+    Extracts links, decodes common redirect parameters and returns list of result dicts.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    # Prefer result anchors if present
+    a_tags = soup.select("a.result__a") or soup.find_all("a", href=True)
     if debug:
         print(f"[debug] total <a> tags found: {len(a_tags)}")
-        sample = [a.get('href') for a in a_tags[:50]]
+        sample = [a.get("href") for a in a_tags[:50]]
         print("[debug] sample hrefs:")
         for s in sample:
             print("  ", s)
+
     seen = set()
     rank = 0
+    out = []
     for a in a_tags:
-        href = a["href"]
-        # canonicalize duckduckgo redirect links if any (uddg param contains encoded target URL)
-        m = re.search(r"uddg=([^&]+)", href)
-        if m:
-            import urllib.parse
-
-            try:
-                href = urllib.parse.unquote(m.group(1))
-            except Exception:
-                # fallback to original href if unquote fails
-                pass
-
-        # Now filter LinkedIn person profile patterns on the canonical/decoded href
-        if not re.search(r"linkedin\.com/(in|pub)/", href, re.I):
-            # also accept some common LinkedIn vanity/profile patterns (best-effort)
-            if not re.search(r"linkedin\.com/[a-zA-Z0-9-]+/?$", href, re.I):
-                continue
-
-        if href in seen:
+        href = a.get("href")
+        if not href:
             continue
-        seen.add(href)
+
+        # canonicalize duckduckgo redirect links if any (uddg param contains encoded target URL)
+        try:
+            parsed = urllib.parse.urlparse(href)
+            qs = urllib.parse.parse_qs(parsed.query)
+            if "uddg" in qs:
+                href = urllib.parse.unquote(qs.get("uddg")[0])
+            elif parsed.path.startswith("/l/") and "uddg" in qs:
+                href = urllib.parse.unquote(qs.get("uddg")[0])
+        except Exception:
+            # keep original href on failure
+            pass
+
+        # normalize: remove fragments and query params
+        try:
+            p2 = urllib.parse.urlparse(href)
+            netloc = (p2.netloc or "").lower()
+            path = p2.path or ""
+            href_norm = urllib.parse.urlunparse((p2.scheme or "https", netloc, path.rstrip("/"), "", "", ""))
+        except Exception:
+            href_norm = href
+
+        # Must be a linkedin domain
+        if "linkedin.com" not in href_norm:
+            continue
+
+        # Exclude known non-profile paths
+        lower_path = path.lower()
+        excluded_prefixes = ["/company", "/jobs", "/school", "/groups", "/pulse", "/posts", "/feed"]
+        if any(lower_path.startswith(p) for p in excluded_prefixes):
+            continue
+
+        # Accept common profile patterns (/in/ or /pub/) and some vanity patterns
+        if not re.search(r"^/(in|pub)/", lower_path) and not re.search(r"^/[a-z0-9-]+$", lower_path, re.I):
+            # Not a profile-like path
+            continue
+
+        if href_norm in seen:
+            continue
+        seen.add(href_norm)
+
         rank += 1
         title = a.get_text(strip=True)
         snippet = ""
-        # try to capture snippet nearby
         parent = a.find_parent()
         if parent:
             p = parent.find_next_sibling("a") or parent.find_next_sibling("div")
             if p:
                 snippet = p.get_text(strip=True)[:300]
-        links.append({"rank": rank, "name": title, "url": href, "snippet": snippet, "engine": "duckduckgo"})
+
+        out.append({"rank": rank, "name": title, "url": href_norm, "snippet": snippet, "engine": "duckduckgo"})
         if rank >= num:
             break
-    return links
+
+    return out
 
 
 def save_results(results: List[Dict], path: str) -> None:
