@@ -26,7 +26,7 @@ except Exception:
         loc = candidate_json.get("contact_info", {}).get("location", "")
         # normalize experience using simple mapping
         experience = "Entry level"
-        return [{"keyword": k, "location": loc or "India", "experience": experience} for k in keywords[:5]]
+        return [{"keyword": k, "location": loc or "Munich", "experience": experience} for k in keywords[:5]]
 
 try:
     from services.job_scraper.job_scraper import scrape_linkedin_jobs
