@@ -1,0 +1,46 @@
+{
+  "generated_at": "2025-11-09T00:14:27.229377",
+  "top_matches": [
+    {
+      "rank": 1,
+      "job_id": "job6",
+      "match_score": 98,
+      "reason": "The candidate's project 'Extending VGGT for Novel View Synthesis' is an almost perfect, highly specific match for this research role's focus on novel view synthesis and neural rendering, complemented by their Deep Learning and CNN skills."
+    },
+    {
+      "rank": 2,
+      "job_id": "job4",
+      "match_score": 95,
+      "reason": "This role perfectly aligns with the candidate's current 'Working Student Data Scientist' position and explicit 'Natural Language Processing (NLP)' and 'Finetuning' skills, directly matching job responsibilities for building NLP models and RAG systems."
+    },
+    {
+      "rank": 3,
+      "job_id": "job2",
+      "match_score": 92,
+      "reason": "The candidate's strong Deep Learning, CNN skills, and relevant computer vision project experience (novel view synthesis) are highly applicable to developing deep learning models for autonomous driving and computer vision tasks described."
+    }
+  ],
+  "job_details": [
+    {
+      "id": "job6",
+      "title": "Research Scientist - Computer Vision",
+      "company": "Max Planck Institute",
+      "location": "Tübingen, Germany",
+      "description": "Join our research group working on novel view synthesis, 3D reconstruction, and neural rendering. Publish at top-tier conferences (CVPR, ICCV, NeurIPS).\n\nResponsibilities:\n- Conduct cutting-edge research in computer vision\n- Implement and extend state-of-the-art methods (NeRF, Gaussian Splatting)\n- Collaborate with international researchers\n- Publish in top conferences and journals\n\nRequirements:\n- PhD student or recent PhD in Computer Science/Vision\n- Strong publication record\n- Excellent Python, PyTorch skills\n- Deep understanding of 3D geometry and rendering\n- Experience with neural radiance fields or related methods\n- Strong mathematical background"
+    },
+    {
+      "id": "job4",
+      "title": "Data Scientist - NLP",
+      "company": "SAP",
+      "location": "Walldorf, Germany",
+      "description": "Join SAP's AI team to develop natural language processing solutions for enterprise software. Work on chatbots, document analysis, and intelligent automation.\n\nYour Role:\n- Build NLP models for text classification, named entity recognition\n- Implement RAG (Retrieval Augmented Generation) systems\n- Fine-tune large language models for business applications\n- Create APIs for model deployment\n\nQualifications:\n- MS/PhD in Computer Science, Linguistics, or related field\n- Strong Python, NLP libraries (spaCy, Hugging Face)\n- Experience with transformers and LLMs\n- Knowledge of vector databases\n- Background in enterprise software is a plus\n- Fluent English"
+    },
+    {
+      "id": "job2",
+      "title": "Machine Learning Engineer",
+      "company": "BMW Group",
+      "location": "Munich, Germany",
+      "description": "Join BMW's innovation hub as a Machine Learning Engineer working on autonomous driving systems. You'll develop and deploy deep learning models for computer vision tasks including object detection, scene understanding, and trajectory prediction.\n\nResponsibilities:\n- Design and implement CNN/RNN architectures for autonomous driving\n- Optimize model performance for real-time inference\n- Collaborate with robotics and sensor fusion teams\n- Deploy models to vehicle edge computing platforms\n\nRequirements:\n- MS in Computer Science, AI, or related field\n- Strong Python, TensorFlow/PyTorch experience\n- Experience with computer vision and deep learning\n- Knowledge of ROS and embedded systems is a plus\n- Fluent in English, German is a plus"
+    }
+  ]
+}

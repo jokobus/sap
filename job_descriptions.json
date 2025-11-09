@@ -1,0 +1,44 @@
+[
+  {
+    "id": "job1",
+    "title": "Working Student (m/f/d) – AI Developer",
+    "company": "Dassault Systèmes (3DEXCITE)",
+    "location": "Munich, Germany",
+    "description": "We are currently hiring for an exciting opportunity as a Working Student (m/f/d) – AI Developer to join our team. You will be part of a team whose mission is to define and implement software components integrated to tools and Apps for Design Validation, Ergonomic studies, Perceived Quality and Marketing Experiences, used by Dassault Systèmes' customers. You will also work in collaboration with other teams such as Infrastructures, Technical Product Managers and Quality Assessment teams.\n\nRole Description & Responsibilities\nYou will produce test and training data for AI models\nYou will evaluate and optimize AI algorithms to produce high-end visualization content\nYou will collaborate with various experts in the R&D department\n\nQualifications\nYou are currently studying Bachelor's or Master Degree in Computer Science or equivalent discipline\nYou have basic understanding of rendering and/or image processing techniques\nYou have knowledge of C++ and Python\nYou have experience in AI tools (Stable Diffusion is a plus)\nYou are fluent in spoken and written English"
+  },
+  {
+    "id": "job2",
+    "title": "Machine Learning Engineer",
+    "company": "BMW Group",
+    "location": "Munich, Germany",
+    "description": "Join BMW's innovation hub as a Machine Learning Engineer working on autonomous driving systems. You'll develop and deploy deep learning models for computer vision tasks including object detection, scene understanding, and trajectory prediction.\n\nResponsibilities:\n- Design and implement CNN/RNN architectures for autonomous driving\n- Optimize model performance for real-time inference\n- Collaborate with robotics and sensor fusion teams\n- Deploy models to vehicle edge computing platforms\n\nRequirements:\n- MS in Computer Science, AI, or related field\n- Strong Python, TensorFlow/PyTorch experience\n- Experience with computer vision and deep learning\n- Knowledge of ROS and embedded systems is a plus\n- Fluent in English, German is a plus"
+  },
+  {
+    "id": "job3",
+    "title": "Full Stack Developer",
+    "company": "Siemens Digital Industries",
+    "location": "Erlangen, Germany",
+    "description": "We're looking for a Full Stack Developer to build web applications for industrial IoT solutions. You'll work on cloud-based platforms that connect factories worldwide.\n\nResponsibilities:\n- Develop frontend using React/Angular\n- Build backend APIs with Node.js/Python\n- Integrate with cloud services (Azure/AWS)\n- Work with industrial protocols and data streams\n\nRequirements:\n- Bachelor's in Computer Science or equivalent\n- 2+ years experience with JavaScript/TypeScript\n- Strong knowledge of REST APIs and databases\n- Experience with Docker and Kubernetes\n- Cloud platform experience (Azure preferred)\n- English fluency required"
+  },
+  {
+    "id": "job4",
+    "title": "Data Scientist - NLP",
+    "company": "SAP",
+    "location": "Walldorf, Germany",
+    "description": "Join SAP's AI team to develop natural language processing solutions for enterprise software. Work on chatbots, document analysis, and intelligent automation.\n\nYour Role:\n- Build NLP models for text classification, named entity recognition\n- Implement RAG (Retrieval Augmented Generation) systems\n- Fine-tune large language models for business applications\n- Create APIs for model deployment\n\nQualifications:\n- MS/PhD in Computer Science, Linguistics, or related field\n- Strong Python, NLP libraries (spaCy, Hugging Face)\n- Experience with transformers and LLMs\n- Knowledge of vector databases\n- Background in enterprise software is a plus\n- Fluent English"
+  },
+  {
+    "id": "job5",
+    "title": "Backend Engineer - Java",
+    "company": "Allianz Technology",
+    "location": "Munich, Germany",
+    "description": "Build scalable microservices for insurance platform serving millions of customers. Work with modern Java stack and cloud technologies.\n\nWhat You'll Do:\n- Design microservices architecture\n- Develop REST APIs using Spring Boot\n- Optimize database queries and performance\n- Implement CI/CD pipelines\n\nWhat We Need:\n- Bachelor's degree in Computer Science\n- 3+ years Java/Spring experience\n- Strong understanding of SQL and NoSQL databases\n- Experience with Kafka, Docker, Kubernetes\n- Knowledge of AWS/Azure\n- German and English language skills"
+  },
+  {
+    "id": "job6",
+    "title": "Research Scientist - Computer Vision",
+    "company": "Max Planck Institute",
+    "location": "Tübingen, Germany",
+    "description": "Join our research group working on novel view synthesis, 3D reconstruction, and neural rendering. Publish at top-tier conferences (CVPR, ICCV, NeurIPS).\n\nResponsibilities:\n- Conduct cutting-edge research in computer vision\n- Implement and extend state-of-the-art methods (NeRF, Gaussian Splatting)\n- Collaborate with international researchers\n- Publish in top conferences and journals\n\nRequirements:\n- PhD student or recent PhD in Computer Science/Vision\n- Strong publication record\n- Excellent Python, PyTorch skills\n- Deep understanding of 3D geometry and rendering\n- Experience with neural radiance fields or related methods\n- Strong mathematical background"
+  }
+]

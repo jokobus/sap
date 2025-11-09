@@ -1,0 +1,31 @@
+[Your Name]
+Shishir Sunar
+Einsteinstraße 10,
+Garching bei München,
+85748, Germany
+shishir.sunar9@gmail.com
+015733734290
+
+[Date]
+
+Hiring Manager
+3DEXCITE (Dassault Systèmes)
+[Company Address, if known, otherwise omit]
+Munich, Germany
+
+**Subject: Application for Working Student (m/f/d) – AI Developer**
+
+Dear Hiring Manager,
+
+I am writing to express my enthusiastic interest in the Working Student (m/f/d) – AI Developer position at 3DEXCITE, as advertised. As a Master of Science student in Informatics at the Technical University of Munich with a strong foundation in Computer Science and practical experience in AI and software development, I am deeply impressed by Dassault Systèmes' mission to enhance design validation, ergonomic studies, and high-end marketing experiences. I am confident that my academic background, technical skills, and hands-on experience make me an ideal candidate to contribute to your team’s innovative work in producing and optimizing AI-driven visualization content.
+
+My academic journey, including a Bachelor's in Computer Science from Jacobs University Bremen with an excellent GPA, has equipped me with a robust understanding of computer science fundamentals, including C++ and Python, which are essential for this role. My experience as a Working Student Data Scientist at CHECK24 involved implementing object-level coherence tracking and evaluating state-of-the-art models for liveness and screen recapture detection, directly correlating with the responsibility of producing test/training data and evaluating AI algorithms. Furthermore, my "Extending VGGT for Novel View Synthesis" project, undertaken at Prof. Dr. Daniel Cremers' chair, demonstrates my specific expertise in finetuning models for visualization and rendering, aligning perfectly with your focus on high-end visualization content.
+
+In previous roles, such as a Studentischer Wissenschaftler at the Alfred Wegener Institute, I gained valuable experience implementing Convolutional Neural Networks (CNNs) and developing Python APIs for prediction and data processing, which solidifies my capabilities in AI algorithm development and image processing techniques. My background also includes implementing Generative Augmented Retrieval (GAR) with GPT 4.0 as a Junior Software Engineer, showcasing my ability to work with advanced AI models and integrate them into practical applications. I thrive in collaborative environments, as demonstrated by my experience working with various teams at CHECK24 and P&M Agentur, and I am eager to contribute to your R&D department alongside other experts.
+
+I am particularly excited by the prospect of contributing to 3DEXCITE's cutting-edge projects and learning from highly qualified teams. My certifications in Machine Learning and Deep Learning from Stanford and MITx further underscore my commitment to continuous growth in the AI domain. With my current residence in Garching bei München, I am also ideally situated for this position in Munich.
+
+Thank you for considering my application. I am eager to discuss how my skills and passion for AI development, particularly in visualization, can benefit 3DEXCITE. I have attached my resume for your review and welcome the opportunity for an interview.
+
+Sincerely,
+Shishir Sunar

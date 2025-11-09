@@ -1,0 +1,481 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
+  "basics": {
+    "name": "Shishir Sunar",
+    "label": "MSc. Informatics TUM | Check24",
+    "image": "",
+    "email": "shishir.sunar9@gmail.com",
+    "phone": "015733734290",
+    "url": "",
+    "summary": "",
+    "location": {
+      "countryCode": "US",
+      "address": "Einsteinstraße 10,\nGarching bei München,\n85748, Germany"
+    },
+    "profiles": [
+      {
+        "network": "LinkedIn",
+        "username": "shishirsunar9",
+        "url": "https://www.linkedin.com/in/shishirsunar9/"
+      }
+    ]
+  },
+  "work": [
+    {
+      "name": "CHECK24 Vergleichsportal GmbH",
+      "position": "Working Student Data Scientist",
+      "startDate": "2024-08-31",
+      "endDate": "",
+      "highlights": [],
+      "summary": "Goal: To make digital identity verification effortless and trustworthy.\n\nKey Contributions:\n- Implemented object-level coherence tracking to enhance liveness detection in video verification.\n- Evaluated SOTA screen recapture detection models to identify fraudulent video submissions.\n- Research in one-shot learning techniques for hologram detection on ID cards.\n- Built a web scrapping for EU id card template extraction.",
+      "url": "https://www.linkedin.com/company/check24-vergleichsportal-gmbh/",
+      "location": "Munich, Bavaria, Germany"
+    },
+    {
+      "name": "P&M Agentur Software + Consulting",
+      "position": "Junior Software Engineer - NLP",
+      "startDate": "2024-05-31",
+      "endDate": "2024-07-31",
+      "highlights": [],
+      "url": "https://www.linkedin.com/company/pm-agentur/",
+      "location": "Hamburg, Germany"
+    },
+    {
+      "name": "P&M Agentur Software + Consulting",
+      "position": "Junior Software Engineer - NLP",
+      "startDate": "2023-12-31",
+      "endDate": "2024-04-30",
+      "highlights": [],
+      "summary": "- Implementation of Generative Augmented Retrieval (GAR) with GPT 4.0\n- Integration of documents through Document Management System (DMS)\n- Backend with Domain Driven Design (DDD) in ABP framework C#,\n- Frontend in Angular",
+      "url": "https://www.linkedin.com/company/pm-agentur/",
+      "location": "Germany"
+    },
+    {
+      "name": "Jacobs University Bremen",
+      "position": "Teaching Assistant",
+      "startDate": "2022-09-30",
+      "endDate": "2023-05-31",
+      "highlights": [],
+      "summary": "Teaching Assistant for two courses namely 1)Automata Computability and Complexity 2) Operating Systems",
+      "url": "https://www.linkedin.com/school/jacobs-university-bremen/",
+      "location": "Germany"
+    },
+    {
+      "name": "Alfred Wegener Institute Helmholtz centre for polar and marine research",
+      "position": "Studentischer Wissenschaftler - AI in Climate Science",
+      "startDate": "2022-01-31",
+      "endDate": "2023-05-31",
+      "highlights": [],
+      "summary": "▪ Implementation of Convolutional Neural Network (CNN) based on existing literature.\n▪ Created three major APIs in Python: Interpolation of unstructured mesh grid, CNN model for prediction, Backward algorithm to generate statistics and tracking.\n▪ Completed an 8-week full time mandatory internship.",
+      "url": "https://www.linkedin.com/company/alfred-wegener-institut/",
+      "location": "Bremerhaven, Bremen, Germany"
+    },
+    {
+      "name": "edyoucated",
+      "position": "Working Student Data Science Research",
+      "startDate": "2021-10-31",
+      "endDate": "2022-03-31",
+      "highlights": [],
+      "summary": "▪ Built statistical models to predict difficulty of a Course using customer consumption rates and\ndropouts.\n▪ Researched on several KPIs to maximize user retention rate.",
+      "url": "https://www.linkedin.com/company/edyoucated/",
+      "location": "Münster, North Rhine-Westphalia, Germany"
+    }
+  ],
+  "volunteer": [
+    {
+      "organization": "Partnership in Education",
+      "position": "Tutor",
+      "startDate": "2017-11-30",
+      "endDate": "2018-08-31",
+      "summary": "Assisted homeless, orphans, and under-privileged  students to achieve better education.",
+      "highlights": [],
+      "url": ""
+    }
+  ],
+  "education": [
+    {
+      "institution": "Technical University of Munich",
+      "area": "Informatics",
+      "studyType": "Master of Science - MS",
+      "startDate": "2024-04-30",
+      "endDate": "2026-10-31",
+      "score": "",
+      "courses": []
+    },
+    {
+      "institution": "Jacobs University Bremen",
+      "area": "Computer Science",
+      "studyType": "Bachelor of Science - BS",
+      "startDate": "2020-08-31",
+      "endDate": "2023-08-31",
+      "score": "1.4 (EU Scale)",
+      "courses": []
+    },
+    {
+      "institution": "St. Xavier's College, Maitighar",
+      "area": "Science",
+      "studyType": "High School Diploma",
+      "startDate": "2016-12-31",
+      "endDate": "2018-12-31",
+      "score": "",
+      "courses": []
+    }
+  ],
+  "awards": [],
+  "certificates": [
+    {
+      "name": "MATLAB Onramp",
+      "issuer": "MATLAB Training",
+      "startDate": "2019-05-31",
+      "url": "https://matlabacademy.mathworks.com/progress/certificate.html?course=gettingstarted&release=R2019a&language=en"
+    },
+    {
+      "name": "Machine Learning",
+      "issuer": "Stanford University",
+      "startDate": "2019-07-31",
+      "url": "https://www.coursera.org/account/accomplishments/certificate/P3XWSL3AP72D"
+    },
+    {
+      "name": "Probability - The Science of Uncertainty and Data",
+      "issuer": "MITx on edX",
+      "startDate": "2020-04-30",
+      "url": "https://courses.edx.org/certificates/49af106503e24057b4fd3322bd78b662"
+    },
+    {
+      "name": "Fundamentals of Statistics",
+      "issuer": "MITx on edX",
+      "startDate": "2020-08-31",
+      "url": "https://courses.edx.org/certificates/3437e806f65f46fa9c1148f0585dcd80"
+    },
+    {
+      "name": "Machine Learning with Python-From Linear Models to Deep Learning",
+      "issuer": "MITx on edX",
+      "startDate": "2019-08-31",
+      "url": "https://courses.edx.org/certificates/71b18933c991479fa8020e651fbafc6f"
+    },
+    {
+      "name": "Data Analysis: Statistical Modeling and Computation in Applications",
+      "issuer": "MITx on edX",
+      "startDate": "2021-02-28",
+      "url": "https://courses.edx.org/certificates/c8e2eb9c338643d6bd019dd4ed051731"
+    }
+  ],
+  "publications": [
+    {
+      "name": "Recognition of Hand Written Mathematical Expression using Scale Augmentation and Drop Attention",
+      "publisher": "Mathpix Spectra",
+      "releaseDate": "2021-03-14",
+      "summary": "",
+      "url": "https://spectra.pub/ml/math-reco"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Matplotlib",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Protein Prediction",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Finetuning",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "TensorBoard",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "MATLAB",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "C++",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Pandas (Software)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Convolutional Neural Networks (CNN)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "C#",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "High Performance Computing (HPC)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "VBA",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Natural Language Processing (NLP)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Robot Operating System (ROS)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Git",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Arduino IDE",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Deep Learning",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Angular",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Linux",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Microsoft Office",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "R",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Software Testing",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "MySQL",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Raspberry Pi",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Operating Systems",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "PyTorch",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Cascading Style Sheets (CSS)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Drones",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Docker",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Scientific Writing",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "UML",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "TensorFlow",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Python (Programming Language)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Go (Programming Language)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "HTML5",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "JavaScript",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Figma",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "SQL",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Data Analysis",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Flask",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Reinforcement Learning",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Microsoft Azure",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "C",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "HTML",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "AngularJS",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "PHP",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Machine Learning",
+      "level": "",
+      "keywords": []
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "fluency": "Native Speaker"
+    }
+  ],
+  "interests": [],
+  "references": [],
+  "projects": [
+    {
+      "name": "Deep Entropy",
+      "startDate": "2025-04-30",
+      "summary": "Multi-Definition Disorder Predictor​. Goal of this project is to train a shared encoder for multiple protein disorder definitions: NMR, Softdis, Disprot.",
+      "url": null,
+      "endDate": "2025-04-30"
+    },
+    {
+      "name": "Extending VGGT for Novel View Synthesis",
+      "startDate": "2025-04-30",
+      "summary": "The is a practical project in Prof. Dr. Daniel Cremers' chair. Goal of this project is to Finetune VGGT for Novel View Synthesis",
+      "url": null,
+      "endDate": "2025-04-30"
+    },
+    {
+      "name": "COVID-19 user tracker",
+      "startDate": "2022-09-30",
+      "summary": "A simple QR code based user tracking web app for gaining insights on infected users.",
+      "url": null,
+      "endDate": "2023-02-28"
+    },
+    {
+      "name": "Path_planning on BlueROV",
+      "startDate": "2022-09-30",
+      "summary": "Implemented A-star Path planning algorithm for BlueROV.",
+      "url": null,
+      "endDate": "2023-02-28"
+    },
+    {
+      "name": "Stock Analyser",
+      "startDate": "2022-09-30",
+      "summary": "- Implemented and researched over Brownian motion in real world stock data.\n- Used Black Scholes equation to define the proper value for Call and put option in trading.",
+      "url": null,
+      "endDate": "2022-12-31"
+    },
+    {
+      "name": "Grad School Application",
+      "startDate": "2022-02-28",
+      "summary": "A web app to help undergraduate students to find the right fit university for PhD or Masters.",
+      "url": null,
+      "endDate": "2022-05-31"
+    },
+    {
+      "name": "Machine-Learning-MITx-6.86x",
+      "startDate": "2019-06-30",
+      "summary": "- MNIST Digit Recognition\n- Recommender Systems and Collaborative filtering\n- Reinforcement Learning\n- Sentiment Analysis",
+      "url": "https://github.com/LegoCreation/Machine-Learning-MITx-6.86x/tree/root",
+      "endDate": "2019-09-30"
+    },
+    {
+      "name": "Gesture Controlled drone",
+      "startDate": "2017-09-30",
+      "summary": "Hacked a drone remote for controlling the quad through gestures.",
+      "url": "https://youtu.be/3R2hByNvxgU",
+      "endDate": "2017-12-31"
+    },
+    {
+      "name": "Xbot - An autonomous flying robot",
+      "startDate": "2016-03-31",
+      "summary": "• Coded the flight control system, PID control, sensor modules, escape algorithm, and data transmission in Arduino(C/C++).\n• Participated in Google Science Fair 2016.",
+      "url": "https://github.com/LegoCreation/Xbot",
+      "endDate": "2017-04-30"
+    }
+  ],
+  "meta": {
+    "version": "v1.0.0",
+    "canonical": "https://github.com/jsonresume/resume-schema/blob/v1.0.0/schema.json"
+  }
+}
