@@ -3,24 +3,24 @@ import json
 from typing import Tuple, List
 
 import fitz
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 import uvicorn
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from google import genai
 from google.genai.errors import APIError
 from pydantic import ValidationError
-from resume_schema import Resume
+from services.resume_parser.resume_schema import Resume
+from services.utils import to_serializable
 
-load_dotenv()
-client = genai.Client()
+# load_dotenv()
+# client = genai.Client()
 
-MODEL = "gemini-2.0-flash" #good balance
 # MODEL = "gemini-2.0-flash-lite" # not got social links
 # MODEL = "gemini-2.5-flash-lite"
 # MODEL = "gemini-2.5-flash"
 
-RESUMES_ROOT = os.path.abspath("services/resume-parser/sample-resumes")
+MODEL = "gemini-2.0-flash" #good balance
 
 PROMPT = """
             You are an expert resume-parser-API endpoint. Your sole task is to analyze the resume text provided below and produce a single, valid JSON object that conforms *exactly* to the provided JSON Schema.
@@ -38,11 +38,10 @@ PROMPT = """
             ---END OF RESUME TEXT---
         """
 
-app = FastAPI()
-
-def extract_text_and_links_from_pdf(path: str) -> Tuple[str, List[str]]:
-    final_path = os.path.join(os.getcwd(), path)
-    doc = fitz.open(final_path)
+def extract_text_and_links_from_pdf(file_bytes: bytes) -> Tuple[str, List[str]]:
+    # final_path = os.path.join(os.getcwd(), path)
+    # doc = fitz.open(file_bytes)
+    doc = fitz.open(stream=file_bytes, filetype="pdf")
     parts = []
     urls = set()
     for page in doc:
@@ -56,7 +55,7 @@ def extract_text_and_links_from_pdf(path: str) -> Tuple[str, List[str]]:
     return "\n".join(parts).strip(), sorted(urls)
 
 
-def model_response(prompt: str) -> str:
+def model_response(prompt: str, client) -> str:
     response = client.models.generate_content(
         model=MODEL,
         contents=prompt,
@@ -67,10 +66,9 @@ def model_response(prompt: str) -> str:
     )
     return response.text
 
-@app.post("/parse")
-async def parse_resume(file_path: str = Query(..., alias="file")):
-    dest = os.path.abspath(os.path.join(RESUMES_ROOT, file_path.lstrip("/")))
 
+async def parse_resume(file_path, client):
+    dest = file_path
 
     try:
         text, links = extract_text_and_links_from_pdf(dest)
@@ -81,32 +79,10 @@ async def parse_resume(file_path: str = Query(..., alias="file")):
     prompt = PROMPT.format(resume_text=resume_content)
 
 
-    try:
-        resp = model_response(prompt)
-    except APIError as e:
-        error_detail = "API call failed (e.g., Rate Limit Exceeded, Invalid Key, or Server Error)."
-        if "rate limit" in str(e).lower() or "authentication" in str(e).lower():
-            error_detail = f"Gemini API Error: {e}"
-        raise HTTPException(status_code=503, detail=error_detail)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during API call: {e}")
+    resp = model_response(prompt, client)
 
-    # Pydantic Validation and JSON Parsing
-    try:
-        validated_resume = Resume.model_validate_json(resp)
-        # data = validated_resume.model_dump() # gave error: Object of type AnyUrl is not JSON serializable
-        return validated_resume
-
-    except (json.JSONDecodeError, ValidationError) as e:
-        return JSONResponse(
-            content={
-                "error": "Model response validation failed (LLM output does not match schema).",
-                "llm_output": resp,
-                "validation_error": str(e)
-            }, 
-            status_code=500
-        )
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    validated_resume = Resume.model_validate_json(resp)
+    # data = validated_resume.model_dump() # gave error: Object of type AnyUrl is not JSON serializable
+    data = to_serializable(validated_resume)
+    print("\n\nFrom RESUME: ", data, "\n\n")
+    return data

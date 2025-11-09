@@ -1,0 +1,74 @@
+"""
+Module Architecture Visualization
+
+┌─────────────────────────────────────────────────────────────┐
+│                          app.py                             │
+│                  (Main Entry Point)                         │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  - Session state initialization                     │   │
+│  │  - Sidebar configuration                            │   │
+│  │  - Tab routing logic                                │   │
+│  └─────────────────────────────────────────────────────┘   │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+                       │ imports
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      tabs/__init__.py                       │
+│              (Package Initialization)                       │
+└────┬────────┬────────┬────────┬────────────────────────────┘
+     │        │        │        │
+     │        │        │        │
+     ▼        ▼        ▼        ▼
+┌─────────┐ ┌────────┐ ┌──────────┐ ┌──────────────┐
+│ profile │ │ skills │ │ job      │ │ reach_out    │
+│ _tab.py │ │ _tab.py│ │ _search  │ │ _tab.py      │
+│         │ │        │ │ _tab.py  │ │              │
+├─────────┤ ├────────┤ ├──────────┤ ├──────────────┤
+│         │ │        │ │          │ │              │
+│ render_ │ │ render_│ │ render_  │ │ render_      │
+│ profile │ │ skills │ │ job_     │ │ reach_out    │
+│ _tab()  │ │ _tab() │ │ search   │ │ _tab()       │
+│         │ │        │ │ _tab()   │ │              │
+│         │ │        │ │          │ │              │
+│ run_    │ │        │ │ render_  │ │              │
+│ parse_  │ │        │ │ job_card │ │              │
+│ and_    │ │        │ │ ()       │ │              │
+│ save()  │ │        │ │          │ │              │
+│         │ │        │ │ build_   │ │              │
+│         │ │        │ │ queries_ │ │              │
+│         │ │        │ │ and_run_ │ │              │
+│         │ │        │ │ scraper()│ │              │
+└─────────┘ └────────┘ └──────────┘ └──────────────┘
+     │          │           │              │
+     └──────────┴───────────┴──────────────┘
+                       │
+                       │ reads/writes
+                       ▼
+         ┌─────────────────────────┐
+         │   Session State         │
+         │   (Shared Data)         │
+         ├─────────────────────────┤
+         │ - candidate_json        │
+         │ - resume_bytes          │
+         │ - linkedin_bytes        │
+         │ - github_username       │
+         │ - job_queries           │
+         │ - job_results           │
+         │ - selected_job          │
+         │ - active_tab            │
+         └─────────────────────────┘
+
+External Dependencies:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+profile_tab.py:
+  └─> aggregator.parse_all()
+
+job_search_tab.py:
+  ├─> services.job_scraper.main_job.extract_job_search_queries()
+  └─> services.job_scraper.job_scraper.scrape_linkedin_jobs()
+
+All tabs:
+  └─> streamlit (UI framework)
+"""
