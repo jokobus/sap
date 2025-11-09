@@ -1,0 +1,27 @@
+[Your Name]
+[Your Address]
+[Your Phone Number]
+[Your Email]
+
+[Date]
+
+[Hiring Team/Manager Name (if known, otherwise use title)]
+[Hiring Team/Manager Title]
+3DEXCITE
+[Company Address, if known, otherwise omit]
+Munich, Germany
+
+**Subject: Application for Working Student (m/f/d) – AI Developer**
+
+Dear Hiring Team,
+
+I am writing to enthusiastically express my interest in the Working Student (m/f/d) – AI Developer position at 3DEXCITE in Munich, as advertised. With a strong academic foundation from my Master of Science in Informatics from the Technical University of Munich and a Bachelor of Science in Computer Science from Jacobs University Bremen, I am particularly drawn to your team's mission to define and implement software components for Design Validation, Ergonomic studies, Perceived Quality, and Marketing Experiences. The opportunity to contribute to high-end visualization content through innovative AI solutions deeply excites me.
+
+My robust GitHub portfolio notably showcases a strong technical profile in Machine Learning and Deep Learning, with particular expertise in Computer Vision. This includes practical experience with Transformers, Convolutional Neural Networks (CNNs) for detection, and novel view synthesis, providing me with a solid understanding of rendering and image processing techniques that directly align with the role's requirements. My proficiency in C++ and Python, along with experience in finetuning AI models and utilizing tools like TensorBoard, directly prepares me to produce test and training data and evaluate/optimize algorithms for high-end visualization content. I am also adept at collaborating within R&D environments, eager to contribute to a diverse team of experts.
+
+My academic background is complemented by practical experience gained through working student roles as a Data Scientist at CHECK24 Vergleichsportal GmbH and a Junior Software Engineer – NLP at P&M Agentur Software + Consulting. These experiences have honed my data handling, analytical, and software development skills, further preparing me to tackle complex challenges in an AI development setting. I am particularly drawn to the opportunity to learn from and work with highly qualified, dedicated teams, and I am enthusiastic about 3DEXCITE's commitment to professional development through programs like 3DEXPERIENCE University and LinkedIn Learning.
+
+My academic background, specialized skills in Computer Vision and AI, and practical experience make me confident that I can make immediate and valuable contributions to your team. I am eager to discuss how my passion for AI development and my proven technical abilities can support your team's innovative projects. Thank you for your time and consideration.
+
+Sincerely,
+Shishir Sunar

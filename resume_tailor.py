@@ -189,7 +189,7 @@ def resume_to_pdf(resume: dict, out_pdf: str) -> None:
 
 
 def main() -> None:
-    API_KEY = "AIzaSyCdpcLoI53VCunQagRNfQoZjvIALFANHEY"
+    API_KEY = os.environ.get('GOOGLE_API_KEY')
     if not API_KEY:
         print('Please set GOOGLE_API_KEY environment variable and retry.')
         return
@@ -202,12 +202,27 @@ def main() -> None:
     with open('Shishir_Sunar.resume.json', 'r', encoding='utf-8') as f:
         base_resume = json.load(f)
 
+    # Check for GitHub analysis
+    github_context = ""
+    try:
+        github_files = sorted([f for f in os.listdir('.') if f.startswith('github_portfolio_analysis_')])
+        if github_files:
+            with open(github_files[-1], 'r') as f:
+                github_data = json.load(f)
+                analysis = github_data.get('analysis', {})
+                github_context = "\n\nGITHUB PORTFOLIO:\n" + json.dumps({
+                    'matched_projects': analysis.get('matched_projects', [])[:3],
+                    'technical_summary': analysis.get('technical_summary', '')
+                })
+    except:
+        pass
+
     # Build a compact prompt telling the model to output only JSON resume
     prompt = (
         "Given the job posting below, tailor the candidate's resume to highlight the most relevant "
         "experience, skills and projects. Output strictly a single JSON object in JSON Resume schema (basics, work, education, skills, projects, certificates). "
         "Do NOT output any explanation or extra text.\n\n"
-        "JOB:\n" + job + "\n\nCANDIDATE_BASE:\n" + json.dumps(base_resume) + "\n\n"
+        "JOB:\n" + job + "\n\nCANDIDATE_BASE:\n" + json.dumps(base_resume) + github_context + "\n\n"
         "Return only the JSON object."
     )
 

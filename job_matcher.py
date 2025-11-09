@@ -15,7 +15,7 @@ from google import genai
 
 
 def main() -> None:
-    API_KEY = os.environ.get('GOOGLE_API_KEY', 'AIzaSyCdpcLoI53VCunQagRNfQoZjvIALFANHEY')
+    API_KEY = os.environ.get('GOOGLE_API_KEY')
     if not API_KEY:
         print('Please set GOOGLE_API_KEY environment variable and retry.')
         return
@@ -37,12 +37,26 @@ def main() -> None:
     skills = [s.get('name') for s in resume.get('skills', [])[:20]]
     projects = resume.get('projects', [])
 
+    # Check for GitHub analysis
+    github_context = ""
+    try:
+        github_files = sorted([f for f in os.listdir('.') if f.startswith('github_portfolio_analysis_')])
+        if github_files:
+            with open(github_files[-1], 'r') as f:
+                github_data = json.load(f)
+                analysis = github_data.get('analysis', {})
+                if 'top_showcase_repos' in analysis:
+                    repos = analysis.get('top_showcase_repos', [])[:3]
+                    github_context = f"\nTop GitHub Projects: {', '.join([r.get('name', '') for r in repos])}"
+    except:
+        pass
+    
     current_role = f"{work[0].get('position')} at {work[0].get('name')}" if work else "Student"
     resume_summary = f"""Name: {basics.get('name')}
 Education: {', '.join([f"{e.get('studyType')} in {e.get('area')}" for e in education[:2]])}
 Current: {current_role}
 Skills: {', '.join(skills)}
-Key Projects: {', '.join([p.get('name') for p in projects[:5]])}"""
+Key Projects: {', '.join([p.get('name') for p in projects[:5]])}""" + github_context
 
     # Format jobs for prompt
     jobs_text = '\n\n'.join([

@@ -9,7 +9,7 @@ from google import genai
 
 def main():
     # Config
-    API_KEY = os.environ.get('GOOGLE_API_KEY', 'AIzaSyCdpcLoI53VCunQagRNfQoZjvIALFANHEY')
+    API_KEY = os.environ.get('GOOGLE_API_KEY')
     JOB_FILE = "job_description.txt"
     RESUME_FILE = "Shishir_Sunar.resume.json"
     OUTPUT_FILE = f"cover_letter_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
@@ -24,12 +24,25 @@ def main():
     with open(RESUME_FILE, 'r') as f:
         resume = json.load(f)
     
+    # Check for GitHub analysis
+    github_context = ""
+    try:
+        github_files = sorted([f for f in os.listdir('.') if f.startswith('github_portfolio_analysis_')])
+        if github_files:
+            with open(github_files[-1], 'r') as f:
+                github_data = json.load(f)
+                analysis = github_data.get('analysis', {})
+                if 'technical_summary' in analysis:
+                    github_context = f"\n\nGITHUB PORTFOLIO INSIGHTS:\n{analysis.get('technical_summary', '')}"
+    except:
+        pass
+    
     # Format resume summary
     basics = resume.get('basics', {})
     summary = f"""Name: {basics.get('name')}
 Education: {', '.join([f"{e.get('studyType')} in {e.get('area')} from {e.get('institution')}" for e in resume.get('education', [])[:2]])}
 Experience: {', '.join([f"{w.get('position')} at {w.get('name')}" for w in resume.get('work', [])[:3]])}
-Skills: {', '.join([s.get('name') for s in resume.get('skills', [])[:15]])}"""
+Skills: {', '.join([s.get('name') for s in resume.get('skills', [])[:15]])}""" + github_context
     
     # Generate cover letter
     prompt = f"""Write a professional cover letter (3-4 paragraphs) for this job posting.

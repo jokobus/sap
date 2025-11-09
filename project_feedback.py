@@ -16,7 +16,7 @@ from google import genai
 
 
 def main() -> None:
-    API_KEY = "AIzaSyCdpcLoI53VCunQagRNfQoZjvIALFANHEY"
+    API_KEY = os.environ.get('GOOGLE_API_KEY')
     if not API_KEY:
         print('Please set GOOGLE_API_KEY environment variable and retry.')
         return
@@ -33,6 +33,22 @@ def main() -> None:
     projects = resume.get('projects', [])
     work = resume.get('work', [])
     
+    # Check for GitHub analysis
+    github_details = ""
+    try:
+        github_files = sorted([f for f in os.listdir('.') if f.startswith('github_portfolio_analysis_')])
+        if github_files:
+            with open(github_files[-1], 'r') as f:
+                github_data = json.load(f)
+                analysis = github_data.get('analysis', {})
+                matched = analysis.get('matched_projects', [])
+                if matched:
+                    github_details = "\n\nGITHUB REPO DETAILS:\n" + '\n'.join([
+                        f"- {p.get('name', '')}: {p.get('key_features', '')}" for p in matched[:3]
+                    ])
+    except:
+        pass
+    
     # Combine projects and work experience
     items = []
     for p in projects:
@@ -44,7 +60,7 @@ def main() -> None:
         print('No projects or work experience found.')
         return
 
-    items_text = '\n'.join([f"{i+1}. {item}" for i, item in enumerate(items)])
+    items_text = '\n'.join([f"{i+1}. {item}" for i, item in enumerate(items)]) + github_details
 
     prompt = f"""Analyze which projects/experiences are most relevant for this job. Be CONCISE.
 
